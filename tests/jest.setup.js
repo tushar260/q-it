@@ -2,6 +2,10 @@ require('@testing-library/jest-dom');
 const fs = require('fs');
 const path = require('path');
 
+// Mock marked and DOMPurify globally
+global.marked = require('../lib/marked.umd.js');
+global.DOMPurify = require('../lib/purify.min.js');
+
 const popupHtml = fs.readFileSync(path.resolve(__dirname, '../popup.html'), 'utf8');
 
 // Basic mock for Chrome Storage and Runtime

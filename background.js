@@ -1,8 +1,5 @@
 import { buildContextPayload, callGeminiNano, extractJsonFromText } from './aiHelper.js';
-
-const STORAGE_KEY = "qItContextV1";
-const PENDING_QUESTION_KEY = "qItPendingQuestion";
-const LIFETIME_KEY = "qItLifetimeIngestV1";
+import { STORAGE_KEY, PENDING_QUESTION_KEY } from './constants.js';
 
 const MENU_APPEND = "qit-append";
 const MENU_QUESTION = "qit-question";
@@ -127,23 +124,6 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   return false;
 });
 
-async function bumpLifetimePageSelection(store, appendedCharCount) {
-  const data = await store.get(LIFETIME_KEY);
-  const raw = data[LIFETIME_KEY];
-  const cur = {
-    charsFromSaves: Number(raw?.charsFromSaves) || 0,
-    saveCount: Number(raw?.saveCount) || 0,
-    charsFromPageSelection: Number(raw?.charsFromPageSelection) || 0,
-    pageSelectionEvents: Number(raw?.pageSelectionEvents) || 0,
-    filesPickedTotal: Number(raw?.filesPickedTotal) || 0,
-    fileNamesUnique: Array.isArray(raw?.fileNamesUnique)
-      ? raw.fileNamesUnique.filter((x) => typeof x === "string")
-      : [],
-  };
-  cur.charsFromPageSelection += appendedCharCount;
-  cur.pageSelectionEvents += 1;
-  await store.set({ [LIFETIME_KEY]: cur });
-}
 
   async function appendSelectionToContext(selection, store) {
     const data = await store.get(STORAGE_KEY);
@@ -169,6 +149,4 @@ async function bumpLifetimePageSelection(store, appendedCharCount) {
         contextText: ""
       },
     });
-
-    await bumpLifetimePageSelection(store, selection.length);
   }

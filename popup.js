@@ -1,6 +1,17 @@
 import { callGeminiNano } from './aiHelper.js';
+import {
+  THEME_KEY,
+  DARK_MODE_KEY,
+  STORAGE_KEY,
+  PENDING_QUESTION_KEY,
+  AUTOFILL_ENABLED_KEY,
+  AUTOCLICK_ENABLED_KEY,
+  GENERAL_KNOWLEDGE_ENABLED_KEY,
+  AUTOCOPY_ENABLED_KEY,
+  LIFETIME_KEY
+} from './constants.js';
 
-/* global LanguageModel */ // Chrome built-in AI (Gemini Nano); may be undefined in older browsers.
+/* global LanguageModel, marked, DOMPurify */ // Chrome built-in AI (Gemini Nano); may be undefined in older browsers.
 (() => {
   try {
     chrome.runtime.sendMessage({ type: "qit-register-menus" }, () => {
@@ -109,6 +120,9 @@ import { callGeminiNano } from './aiHelper.js';
   function syncLiveContextFromTextarea() {
     if (!contextText || panelContext.hidden) return;
     liveContextBody = contextText.value;
+    if (clearTextBtn) {
+      clearTextBtn.style.display = liveContextBody.trim() ? "inline-flex" : "none";
+    }
     void syncStorage();
   }
 
@@ -121,17 +135,22 @@ import { callGeminiNano } from './aiHelper.js';
       syncLiveContextFromTextarea();
     }
 
-    if (tabContextBtn) {
-      tabContextBtn.classList.toggle("is-active", isContext);
-      tabContextBtn.setAttribute("aria-selected", String(isContext));
-    }
     if (tabQuestionBtn) {
       tabQuestionBtn.classList.toggle("is-active", isQuestion);
       tabQuestionBtn.setAttribute("aria-selected", String(isQuestion));
     }
+    if (tabContextBtn) {
+      tabContextBtn.classList.toggle("is-active", isContext);
+      tabContextBtn.setAttribute("aria-selected", String(isContext));
+    }
     if (tabSettingsBtn) {
       tabSettingsBtn.classList.toggle("is-active", isSettings);
       tabSettingsBtn.setAttribute("aria-selected", String(isSettings));
+    }
+
+    const tabsContainer = document.querySelector(".tabs");
+    if (tabsContainer) {
+      tabsContainer.setAttribute("data-active", which);
     }
 
     if (panelContext) panelContext.hidden = !isContext;
@@ -139,8 +158,6 @@ import { callGeminiNano } from './aiHelper.js';
     if (panelSettings) panelSettings.hidden = !isSettings;
   }
 
-  const LIFETIME_KEY = "qItLifetimeIngestV1";
-  const THEME_KEY = "qItThemeV1";
   const THEME_IDS = [
     "yellow",
     "red",
@@ -148,10 +165,58 @@ import { callGeminiNano } from './aiHelper.js';
     "blue",
     "pink",
     "white",
-    "black",
   ];
 
   const themeBar = document.querySelector(".theme-bar");
+  const darkModeToggle = document.getElementById("dark-mode-toggle");
+
+  if (darkModeToggle) {
+    darkModeToggle.addEventListener("click", (e) => {
+      const isDark = document.body.getAttribute("data-mode") === "dark";
+      
+      const switchTheme = () => {
+        if (isDark) {
+          document.body.removeAttribute("data-mode");
+          storageLocal.set({ [DARK_MODE_KEY]: false });
+        } else {
+          document.body.setAttribute("data-mode", "dark");
+          storageLocal.set({ [DARK_MODE_KEY]: true });
+        }
+      };
+
+      if (!document.startViewTransition) {
+        switchTheme();
+        return;
+      }
+
+      const rect = darkModeToggle.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+
+      const endRadius = Math.hypot(
+        Math.max(x, window.innerWidth - x),
+        Math.max(y, window.innerHeight - y)
+      );
+
+      const transition = document.startViewTransition(switchTheme);
+
+      transition.ready.then(() => {
+        document.documentElement.animate(
+          {
+            clipPath: [
+              `circle(0px at ${x}px ${y}px)`,
+              `circle(${endRadius}px at ${x}px ${y}px)`
+            ]
+          },
+          {
+            duration: 400,
+            easing: "ease-in-out",
+            pseudoElement: "::view-transition-new(root)"
+          }
+        );
+      });
+    });
+  }
 
   /** @param {string} id */
   function applyTheme(id) {
@@ -165,91 +230,31 @@ import { callGeminiNano } from './aiHelper.js';
     });
   }
 
-  /** @param {unknown} raw */
-  function normalizeLifetime(raw) {
-    const o = raw && typeof raw === "object" ? raw : {};
-    return {
-      charsFromSaves: Number(o.charsFromSaves) || 0,
-      saveCount: Number(o.saveCount) || 0,
-      charsFromPageSelection: Number(o.charsFromPageSelection) || 0,
-      pageSelectionEvents: Number(o.pageSelectionEvents) || 0,
-      filesPickedTotal: Number(o.filesPickedTotal) || 0,
-      fileNamesUnique: Array.isArray(o.fileNamesUnique)
-        ? o.fileNamesUnique.filter((x) => typeof x === "string")
-        : [],
-    };
-  }
-
-  function mergeUniqueFileNames(existing, added, cap) {
-    const out = [...existing];
-    const seen = new Set(existing);
-    for (const name of added) {
-      if (out.length >= cap) break;
-      if (seen.has(name)) continue;
-      seen.add(name);
-      out.push(name);
-    }
-    return out;
-  }
-
-  /**
-   * @param {{
-   *   charsFromSavesDelta?: number;
-   *   saveCountDelta?: number;
-   *   charsFromPageSelectionDelta?: number;
-   *   pageSelectionEventsDelta?: number;
-   *   filesPickedDelta?: number;
-   *   fileNamesAdded?: string[];
-   * }} partial
-   */
-  async function bumpLifetime(partial) {
-    const data = await storageLocal.get(LIFETIME_KEY);
-    const cur = normalizeLifetime(data[LIFETIME_KEY]);
-    if (partial.charsFromSavesDelta) {
-      cur.charsFromSaves += partial.charsFromSavesDelta;
-    }
-    if (partial.saveCountDelta) {
-      cur.saveCount += partial.saveCountDelta;
-    }
-    if (partial.charsFromPageSelectionDelta) {
-      cur.charsFromPageSelection += partial.charsFromPageSelectionDelta;
-    }
-    if (partial.pageSelectionEventsDelta) {
-      cur.pageSelectionEvents += partial.pageSelectionEventsDelta;
-    }
-    if (partial.filesPickedDelta) {
-      cur.filesPickedTotal += partial.filesPickedDelta;
-    }
-    if (partial.fileNamesAdded?.length) {
-      cur.fileNamesUnique = mergeUniqueFileNames(
-        cur.fileNamesUnique,
-        partial.fileNamesAdded,
-        40,
-      );
-    }
-    await storageLocal.set({ [LIFETIME_KEY]: cur });
-    await refreshLifetimeIngestionStats();
-  }
-
-  async function refreshLifetimeIngestionStats() {
+  function refreshIngestionStats() {
     try {
-      const data = await storageLocal.get(LIFETIME_KEY);
-      const L = normalizeLifetime(data[LIFETIME_KEY]);
-      const textTotal = L.charsFromSaves + L.charsFromPageSelection;
-      statTextDetail.textContent = `${textTotal.toLocaleString()} characters total · ${L.saveCount.toLocaleString()} save${L.saveCount === 1 ? "" : "s"} · ${L.pageSelectionEvents.toLocaleString()} page selection${L.pageSelectionEvents === 1 ? "" : "s"} (${L.charsFromPageSelection.toLocaleString()} chars from pages)`;
-      statTextDetail.title = `Saved payloads: ${L.charsFromSaves.toLocaleString()} chars`;
+      const textTotal = textHistory.reduce((acc, t) => acc + (t.text ? t.text.length : 0), 0);
+      const saveCount = textHistory.length;
 
-      if (L.filesPickedTotal === 0) {
+      if (saveCount === 0) {
+        statTextDetail.textContent = "0 characters total · 0 snippets";
+        statTextDetail.title = "";
+      } else {
+        statTextDetail.textContent = `${textTotal.toLocaleString()} characters total · ${saveCount.toLocaleString()} snippet${saveCount === 1 ? "" : "s"}`;
+        statTextDetail.title = `Total text snippets: ${saveCount}`;
+      }
+
+      const filesCount = attachments.length;
+      if (filesCount === 0) {
         statFilesDetail.textContent = "No files ingested yet";
         statFilesDetail.title = "";
-        return;
+      } else {
+        const uniqueNames = [...new Set(attachments.map(a => a.file.name))];
+        const joined = uniqueNames.join(", ");
+        const max = 160;
+        const namesPart = joined.length > max ? `${joined.slice(0, max - 1)}…` : joined;
+        statFilesDetail.textContent = `${filesCount.toLocaleString()} file${filesCount === 1 ? "" : "s"} — ${namesPart}`;
+        statFilesDetail.title = joined;
       }
-      const joined = L.fileNamesUnique.join(", ");
-      const max = 160;
-      const namesPart =
-        joined.length > max ? `${joined.slice(0, max - 1)}…` : joined;
-      statFilesDetail.textContent = `${L.filesPickedTotal.toLocaleString()} file${L.filesPickedTotal === 1 ? "" : "s"} — ${namesPart}`;
-      statFilesDetail.title = L.fileNamesUnique.join(", ");
     } catch {
       statTextDetail.textContent = "—";
       statFilesDetail.textContent = "—";
@@ -276,15 +281,22 @@ import { callGeminiNano } from './aiHelper.js';
   if (tabSettingsBtn)
     tabSettingsBtn.addEventListener("click", () => setTab("settings"));
 
-  const STORAGE_KEY = "qItContextV1";
-  const PENDING_QUESTION_KEY = "qItPendingQuestion";
-  const AUTOFILL_ENABLED_KEY = "qitAutofillEnabled";
-  const AUTOCLICK_ENABLED_KEY = "qitAutoclickEnabled";
-  const GENERAL_KNOWLEDGE_ENABLED_KEY = "qitGeneralKnowledgeEnabled";
-
   const autofillToggle = document.getElementById("autofill-toggle");
   const autoclickToggle = document.getElementById("autoclick-toggle");
   const generalKnowledgeToggle = document.getElementById("general-knowledge-toggle");
+  const autocopyToggle = document.getElementById("autocopy-toggle");
+
+  if (autocopyToggle) {
+    storageLocal.get(AUTOCOPY_ENABLED_KEY).then((res) => {
+      const isEnabled = res[AUTOCOPY_ENABLED_KEY] !== false; // Default true
+      autocopyToggle.checked = isEnabled;
+    });
+
+    autocopyToggle.addEventListener("change", (e) => {
+      const isEnabled = e.target.checked;
+      storageLocal.set({ [AUTOCOPY_ENABLED_KEY]: isEnabled });
+    });
+  }
 
   if (generalKnowledgeToggle) {
     storageLocal.get(GENERAL_KNOWLEDGE_ENABLED_KEY).then((res) => {
@@ -380,6 +392,8 @@ import { callGeminiNano } from './aiHelper.js';
   }
 
   function renderHistory() {
+    refreshIngestionStats();
+
     const container = document.getElementById("history-container");
     const textSection = document.getElementById("text-history-section");
     const fileSection = document.getElementById("file-history-section");
@@ -416,9 +430,12 @@ import { callGeminiNano } from './aiHelper.js';
         btn.title = "Delete text snippet";
         btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
         btn.addEventListener("click", () => {
-          textHistory = textHistory.filter((x) => x.id !== t.id);
-          renderHistory();
-          syncStorage();
+          btn.classList.add("is-deleting");
+          window.setTimeout(() => {
+            textHistory = textHistory.filter((x) => x.id !== t.id);
+            renderHistory();
+            syncStorage();
+          }, 250);
         });
 
         li.append(span, btn);
@@ -445,9 +462,12 @@ import { callGeminiNano } from './aiHelper.js';
         btn.title = `Delete ${a.file.name}`;
         btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
         btn.addEventListener("click", () => {
-          attachments = attachments.filter((x) => x.id !== a.id);
-          renderHistory();
-          syncStorage();
+          btn.classList.add("is-deleting");
+          window.setTimeout(() => {
+            attachments = attachments.filter((x) => x.id !== a.id);
+            renderHistory();
+            syncStorage();
+          }, 250);
         });
 
         li.append(span, btn);
@@ -492,7 +512,6 @@ import { callGeminiNano } from './aiHelper.js';
       await syncStorage();
       const n = files.length;
       const names = Array.from(files).map((f) => f.name);
-      await bumpLifetime({ filesPickedDelta: n, fileNamesAdded: names });
       if (n === 1) {
         showIngestSuccess(`Ingested · ${names[0]}`);
       } else {
@@ -589,11 +608,6 @@ import { callGeminiNano } from './aiHelper.js';
 
       await syncStorage();
 
-      await bumpLifetime({
-        charsFromSavesDelta: base.length,
-        saveCountDelta: 1,
-      });
-
       renderHistory();
 
       showIngestSuccess("Context saved to history.");
@@ -627,6 +641,10 @@ import { callGeminiNano } from './aiHelper.js';
           liveContextBody = record.contextText;
           if (contextText) contextText.value = liveContextBody;
         }
+      }
+
+      if (clearTextBtn) {
+        clearTextBtn.style.display = liveContextBody.trim() ? "inline-flex" : "none";
       }
 
       if (attachments.length === 0) {
@@ -682,16 +700,9 @@ import { callGeminiNano } from './aiHelper.js';
     clearTextBtn.addEventListener("click", () => {
       contextText.value = "";
       liveContextBody = "";
+      clearTextBtn.style.display = "none";
       void syncStorage();
-      
-      clearTextBtn.classList.add("is-cleared");
-      clearTextBtn.setAttribute("aria-label", "Cleared");
-      clearTextBtn.setAttribute("title", "Cleared");
-      window.setTimeout(() => {
-        clearTextBtn.classList.remove("is-cleared");
-        clearTextBtn.setAttribute("aria-label", "Clear text");
-        clearTextBtn.setAttribute("title", "Clears the text box");
-      }, 1600);
+      contextText.focus();
     });
   }
 
@@ -717,7 +728,7 @@ import { callGeminiNano } from './aiHelper.js';
   /**
    * @returns {Promise<{ ok: true, text: string } | { ok: false, error: string }>}
    */
-  async function generateAnswer(context, question) {
+  async function generateAnswer(context, question, onStreamChunk) {
     if (!question.trim()) {
       return { ok: false, error: "Add a question on the Question tab." };
     }
@@ -734,7 +745,7 @@ import { callGeminiNano } from './aiHelper.js';
         };
       }
 
-      const text = await callGeminiNano(context, question, false, false, allowGeneralKnowledge);
+      const text = await callGeminiNano(context, question, false, false, allowGeneralKnowledge, onStreamChunk);
       return { ok: true, text };
     } catch (e) {
       return { ok: false, error: e.message || String(e) };
@@ -772,7 +783,11 @@ import { callGeminiNano } from './aiHelper.js';
     const currentToken = ++askToken;
 
     try {
-      const result = await generateAnswer(context, question);
+      const result = await generateAnswer(context, question, (chunk) => {
+        if (currentToken !== askToken) return;
+        lastAnswer = chunk;
+        answerText.innerHTML = DOMPurify.sanitize(marked.parse(chunk));
+      });
       
       // If the user asked another question while we were waiting, discard this result
       if (currentToken !== askToken) return;
@@ -785,7 +800,25 @@ import { callGeminiNano } from './aiHelper.js';
         return;
       }
       lastAnswer = result.text;
-      answerText.textContent = result.text;
+      answerText.innerHTML = DOMPurify.sanitize(marked.parse(result.text));
+
+      // Auto-copy to clipboard if enabled
+      const res = await storageLocal.get(AUTOCOPY_ENABLED_KEY);
+      if (res[AUTOCOPY_ENABLED_KEY] !== false && copyBtn) {
+        try {
+          await navigator.clipboard.writeText(lastAnswer);
+          copyBtn.classList.add("is-copied");
+          copyBtn.setAttribute("aria-label", "Copied");
+          copyBtn.setAttribute("title", "Copied");
+          window.setTimeout(() => {
+            copyBtn.classList.remove("is-copied");
+            copyBtn.setAttribute("aria-label", "Copy answer");
+            copyBtn.setAttribute("title", "Copy answer");
+          }, 1600);
+        } catch {
+          // ignore auto-copy failures silently so we don't break flow
+        }
+      }
     } catch (e) {
       if (currentToken !== askToken) return;
 
@@ -837,42 +870,47 @@ import { callGeminiNano } from './aiHelper.js';
   const deleteAllTextBtn = document.getElementById("delete-all-text-btn");
   if (deleteAllTextBtn) {
     deleteAllTextBtn.addEventListener("click", () => {
-      textHistory = [];
-      renderHistory();
-      void syncStorage();
-      showIngestSuccess("All text snippets deleted.");
+      deleteAllTextBtn.classList.add("is-deleting");
+      window.setTimeout(() => {
+        textHistory = [];
+        renderHistory();
+        void syncStorage();
+        showIngestSuccess("All text snippets deleted.");
+        deleteAllTextBtn.classList.remove("is-deleting");
+      }, 250);
     });
   }
 
   const deleteAllFilesBtn = document.getElementById("delete-all-files-btn");
   if (deleteAllFilesBtn) {
     deleteAllFilesBtn.addEventListener("click", () => {
-      attachments = [];
-      renderHistory();
-      void syncStorage();
-      showIngestSuccess("All files deleted.");
+      deleteAllFilesBtn.classList.add("is-deleting");
+      window.setTimeout(() => {
+        attachments = [];
+        renderHistory();
+        void syncStorage();
+        showIngestSuccess("All files deleted.");
+        deleteAllFilesBtn.classList.remove("is-deleting");
+      }, 250);
     });
   }
 
-  try {
-    chrome.storage.onChanged.addListener((changes, area) => {
-      if (area !== "local" || !changes[LIFETIME_KEY]) return;
-      void refreshLifetimeIngestionStats();
-    });
-  } catch {
-    /* ignore */
-  }
 
   void (async () => {
     try {
-      const data = await storageLocal.get(THEME_KEY);
-      const raw = data[THEME_KEY];
-      if (typeof raw === "string") applyTheme(raw);
+      const data = await storageLocal.get([THEME_KEY, DARK_MODE_KEY]);
+      const rawTheme = data[THEME_KEY];
+      const isDark = data[DARK_MODE_KEY];
+      
+      if (typeof rawTheme === "string") applyTheme(rawTheme);
+      
+      if (isDark === true) {
+        document.body.setAttribute("data-mode", "dark");
+      }
     } catch {
       /* keep default from markup */
     }
     await restoreContext();
-    await refreshLifetimeIngestionStats();
     await applyPendingQuestion();
   })();
 
@@ -883,8 +921,6 @@ import { callGeminiNano } from './aiHelper.js';
     process.env.NODE_ENV === "test"
   ) {
     window.__TEST_EXPORTS__ = {
-      normalizeLifetime,
-      mergeUniqueFileNames,
       uid,
       isTextLike,
       hasUsableInput,
@@ -892,8 +928,7 @@ import { callGeminiNano } from './aiHelper.js';
       localStorageShim,
       setTab,
       applyTheme,
-      bumpLifetime,
-      refreshLifetimeIngestionStats,
+      refreshIngestionStats,
       generateAnswer,
       restoreContext,
       persistContext,

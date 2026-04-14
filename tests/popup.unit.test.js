@@ -24,56 +24,6 @@ describe('popup.js unit tests', () => {
     });
   });
 
-  describe('normalizeLifetime()', () => {
-    it('returns default zeroed object for empty input', () => {
-      expect(api.normalizeLifetime(null)).toEqual({
-        charsFromSaves: 0,
-        saveCount: 0,
-        charsFromPageSelection: 0,
-        pageSelectionEvents: 0,
-        filesPickedTotal: 0,
-        fileNamesUnique: [],
-      });
-    });
-
-    it('parses valid numeric properties and filters unique names', () => {
-      const input = {
-        charsFromSaves: "100",
-        saveCount: 5,
-        charsFromPageSelection: undefined,
-        fileNamesUnique: ["test.txt", 123, "doc.pdf"]
-      };
-      
-      expect(api.normalizeLifetime(input)).toEqual({
-        charsFromSaves: 100,
-        saveCount: 5,
-        charsFromPageSelection: 0,
-        pageSelectionEvents: 0,
-        filesPickedTotal: 0,
-        fileNamesUnique: ["test.txt", "doc.pdf"],
-      });
-    });
-  });
-
-  describe('mergeUniqueFileNames()', () => {
-    it('merges new names up to a cap without duplicates', () => {
-      const existing = ["a.txt", "b.txt"];
-      const added = ["b.txt", "c.txt", "d.txt"];
-      const cap = 4;
-      
-      const merged = api.mergeUniqueFileNames(existing, added, cap);
-      expect(merged).toEqual(["a.txt", "b.txt", "c.txt", "d.txt"]);
-    });
-
-    it('respects the cap when adding new files', () => {
-      const existing = ["a.txt"];
-      const added = ["b.txt", "c.txt", "d.txt"];
-      const cap = 2; // Should only allow existing (1) + 1 new = 2
-      
-      const merged = api.mergeUniqueFileNames(existing, added, cap);
-      expect(merged).toEqual(["a.txt", "b.txt"]);
-    });
-  });
 
   describe('isTextLike()', () => {
     it('returns true for text MIME types', () => {

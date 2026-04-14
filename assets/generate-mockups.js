@@ -3,10 +3,10 @@ const fs = require('fs');
 const path = require('path');
 
 const images = [
-    { file: 'screenshot.png', bgColor: '#9dd4a8', extraCss: 'width: calc(100% + 8px); margin: -4px;' }, // green
-    { file: 'question-tab.png', bgColor: '#a0c0f0', extraCss: 'width: calc(100% + 4px); margin: -2px -2px -3px -2px;' }, // blue
-    { file: 'yellow-theme.png', bgColor: '#e0cc3a', extraCss: 'width: calc(100% + 4px); margin: -2px;' }, // yellow
-    { file: 'pink-theme.png', bgColor: '#e8b0d0', extraCss: 'width: calc(100% + 4px); margin: -2px;' } // pink
+    { file: 'v1.1/context-yellow.png', outFile: 'v1.1/mockup-context-yellow.png', bgColor: '#e0cc3a', extraCss: 'width: calc(100% + 6px); margin: -2px -4px -2px -2px;', height: '520px', pattern: false },
+    { file: 'v1.1/question-pink.png', outFile: 'v1.1/mockup-question-pink.png', bgColor: '#e8b0d0', extraCss: 'width: calc(100% + 4px); margin: -4px -2px -2px -2px;', height: '520px', pattern: false },
+    { file: 'v1.1/settings-green.png', outFile: 'v1.1/mockup-settings-green.png', bgColor: '#9dd4a8', extraCss: 'width: calc(100% + 5px); margin: -4px -3px -4px -2px;', height: '820px', pattern: false },
+    { file: 'v1.1/settings-dark.png', outFile: 'v1.1/mockup-settings-dark.png', bgColor: '#555555', extraCss: 'width: calc(100% + 5px); margin: -4px -2px -4px -3px;', height: '820px', pattern: false }
 ];
 
 async function generate() {
@@ -33,14 +33,14 @@ async function generate() {
                 body {
                     margin: 0;
                     width: 640px;
-                    height: 520px;
+                    height: ${img.height};
                     box-sizing: border-box;
                     background-color: ${img.bgColor};
                     /* Pika's "Circles" pattern */
-                    background-image: 
+                    ${img.pattern ? `background-image: 
                         radial-gradient(circle at 10% 40%, rgba(0, 0, 0, 0.08) 0%, transparent 50%),
                         radial-gradient(circle at 90% 20%, rgba(0, 0, 0, 0.08) 0%, transparent 40%),
-                        radial-gradient(circle at 80% 80%, rgba(0, 0, 0, 0.06) 0%, transparent 40%);
+                        radial-gradient(circle at 80% 80%, rgba(0, 0, 0, 0.06) 0%, transparent 40%);` : ''}
                     border-radius: 0px;
                     display: flex;
                     align-items: center;
@@ -49,7 +49,7 @@ async function generate() {
                 }
                 
                 /* Noise overlay */
-                body::before {
+                ${img.pattern ? `body::before {
                     content: "";
                     position: absolute;
                     top: 0; left: 0; width: 100%; height: 100%;
@@ -57,7 +57,7 @@ async function generate() {
                     opacity: 0.15;
                     pointer-events: none;
                     z-index: 0;
-                }
+                }` : ''}
 
                 .stack-container {
                     position: relative;
@@ -128,7 +128,7 @@ async function generate() {
         await new Promise(r => setTimeout(r, 100));
         
         await element.screenshot({ 
-            path: path.join(__dirname, `mockup-${img.file}`),
+            path: path.join(__dirname, img.outFile),
             omitBackground: false
         });
     }

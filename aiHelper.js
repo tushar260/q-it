@@ -1,9 +1,11 @@
+import { STORAGE_KEY } from './constants.js';
+
 /**
  * Extracts context from storage in the same way `popup.js` builds it
  */
 export async function buildContextPayload(store) {
-  const data = await store.get("qItContextV1");
-  const record = data["qItContextV1"] || {};
+  const data = await store.get(STORAGE_KEY);
+  const record = data[STORAGE_KEY] || {};
   
   const textItems = Array.isArray(record.textItems) ? record.textItems : [];
   const items = Array.isArray(record.items) ? record.items : [];
@@ -29,7 +31,7 @@ export async function buildContextPayload(store) {
  * Handles the actual API call to the Gemini Nano language model
  * Can be reused for both popup chat and autofill features.
  */
-export async function callGeminiNano(context, question, isAutofill = false, isPageAutofill = false, allowGeneralKnowledge = false) {
+export async function callGeminiNano(context, question, isAutofill = false, isPageAutofill = false, allowGeneralKnowledge = false, onStreamChunk = null) {
   const LM = globalThis.LanguageModel || (globalThis.ai && globalThis.ai.languageModel);
   if (!LM || typeof LM.availability !== "function" || typeof LM.create !== "function") {
     throw new Error("Chrome’s on-device model isn’t exposed here. Use Chrome 138 or newer.");
@@ -136,7 +138,22 @@ export async function callGeminiNano(context, question, isAutofill = false, isPa
     // (Only supported locally in the popup context right now due to background worker limits)
     let text = "";
     const promptInput = typeof question === "string" ? question : "Here are the form fields:\n" + JSON.stringify(question);
-    text = await session.prompt(promptInput);
+    
+    if (typeof onStreamChunk === 'function' && typeof session.promptStreaming === 'function') {
+      const stream = await session.promptStreaming(promptInput);
+      let previousChunk = "";
+      for await (const chunk of stream) {
+        // Handle both accumulating and delta streams seamlessly
+        const newText = chunk.startsWith(previousChunk)
+          ? text + chunk.slice(previousChunk.length)
+          : text + chunk;
+        text = newText;
+        previousChunk = chunk;
+        onStreamChunk(text);
+      }
+    } else {
+      text = await session.prompt(promptInput);
+    }
     
     await session.destroy();
     

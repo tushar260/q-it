@@ -47,6 +47,7 @@ module.exports = {
         { from: 'popup.html', to: 'popup.html' },
         { from: 'popup.css', to: 'popup.css' },
         { from: 'icons', to: 'icons' },
+        { from: 'lib', to: 'lib' },
         // If there are other assets, list them here
       ],
     }),

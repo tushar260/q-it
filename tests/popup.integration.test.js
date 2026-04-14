@@ -8,13 +8,13 @@ jest.mock('../aiHelper.js', () => ({
   callGeminiNano: jest.fn().mockResolvedValue('Mocked AI answer')
 }));
 
-const aiHelper = require('../aiHelper.js');
-
 describe('popup.js integration tests', () => {
   let api;
+  let aiHelper;
 
   beforeEach(() => {
     jest.resetModules();
+    aiHelper = require('../aiHelper.js');
     const popupHtml = fs.readFileSync(path.resolve(__dirname, '../popup.html'), 'utf8');
     document.body.innerHTML = popupHtml;
     
@@ -33,6 +33,9 @@ describe('popup.js integration tests', () => {
   });
 
   it('updates liveContextBody on textarea input and saves to local storage', () => {
+    // Make sure we're on the context tab to test this properly
+    document.getElementById('tab-context').click();
+    
     const textarea = document.getElementById('context-text');
     textarea.value = 'New context added';
     fireEvent.input(textarea);
@@ -43,6 +46,7 @@ describe('popup.js integration tests', () => {
   });
 
   it('saves text to history when "Save text" is clicked and clears textarea', async () => {
+    document.getElementById('tab-context').click();
     const textarea = document.getElementById('context-text');
     const saveBtn = document.getElementById('save-context-btn');
     
@@ -122,20 +126,20 @@ describe('popup.js integration tests', () => {
     const panelContext = document.getElementById('panel-context');
     const panelQuestion = document.getElementById('panel-question');
     
-    // Initial state
-    expect(panelContext.hidden).toBe(false);
-    expect(panelQuestion.hidden).toBe(true);
-    
-    // Switch to question
-    fireEvent.click(tabQuestion);
-    expect(panelContext.hidden).toBe(true);
+    // Initial state (question is default now)
     expect(panelQuestion.hidden).toBe(false);
-    expect(tabQuestion.classList.contains('is-active')).toBe(true);
+    expect(panelContext.hidden).toBe(true);
     
-    // Switch back to context
+    // Switch to context
     fireEvent.click(tabContext);
     expect(panelContext.hidden).toBe(false);
     expect(panelQuestion.hidden).toBe(true);
+    expect(tabContext.classList.contains('is-active')).toBe(true);
+    
+    // Switch back to question
+    fireEvent.click(tabQuestion);
+    expect(panelQuestion.hidden).toBe(false);
+    expect(panelContext.hidden).toBe(true);
   });
 
   it('shows an error if asking without context', async () => {
@@ -190,6 +194,7 @@ describe('popup.js integration tests', () => {
   });
 
   it('submits and saves context when hitting Enter on the context box', async () => {
+    document.getElementById('tab-context').click();
     const contextText = document.getElementById('context-text');
     const ingestStatus = document.getElementById('ingest-status');
     
@@ -241,10 +246,94 @@ describe('popup.js integration tests', () => {
     
     await waitFor(() => {
       // AI answer should eventually appear
-      expect(answerText.textContent).toBe('Mocked AI answer');
+      expect(answerText.textContent.trim()).toBe('Mocked AI answer');
       // The question text box should be cleared
       expect(questionEl.value).toBe('');
     });
+  });
+
+  it('hides the error message and shows the loader when a new question is asked', async () => {
+    aiHelper.callGeminiNano.mockRejectedValueOnce(new Error('First AI error'));
+
+    api.setTextHistory([{ id: '1', text: 'Some valid context here.' }]);
     
+    const questionEl = document.getElementById('question');
+    const answerText = document.getElementById('answer-text');
+    const answerBlock = document.getElementById('answer-block');
+    const answerError = document.getElementById('answer-error');
+    
+    document.getElementById('tab-question').click();
+    
+    // Ask first question that will throw an error
+    questionEl.value = 'Will this fail?';
+    fireEvent.keyDown(questionEl, { key: 'Enter', code: 'Enter', charCode: 13 });
+    
+    await waitFor(() => {
+      expect(answerError.hidden).toBe(false);
+      expect(answerError.textContent).toBe('First AI error');
+    });
+
+    // Mock it to succeed next time
+    aiHelper.callGeminiNano.mockResolvedValueOnce('Success answer');
+
+    // Ask second question
+    questionEl.value = 'Will this succeed?';
+    fireEvent.keyDown(questionEl, { key: 'Enter', code: 'Enter', charCode: 13 });
+
+    // The error should instantly hide, and loader should show
+    expect(answerError.hidden).toBe(true);
+    expect(answerBlock.hidden).toBe(false);
+    expect(answerText.innerHTML).toContain('loader-dot');
+
+    await waitFor(() => {
+      expect(answerText.textContent.trim()).toBe('Success answer');
+    });
+  });
+
+  it('allows overriding a question before the first one finishes', async () => {
+    let resolveFirst;
+    const firstPromise = new Promise(r => resolveFirst = r);
+    
+    // We expect the first call to hang, and the second call to resolve quickly
+    aiHelper.callGeminiNano.mockImplementation((context, question) => {
+      if (question === 'First question?') return firstPromise;
+      return Promise.resolve('Second AI answer');
+    });
+
+    api.setTextHistory([{ id: '1', text: 'Some valid context here.' }]);
+    
+    const questionEl = document.getElementById('question');
+    const answerText = document.getElementById('answer-text');
+    const askedQuestionText = document.getElementById('asked-question-text');
+    
+    document.getElementById('tab-question').click();
+    
+    // First question
+    questionEl.value = 'First question?';
+    fireEvent.keyDown(questionEl, { key: 'Enter', code: 'Enter', charCode: 13 });
+    
+    expect(askedQuestionText.textContent).toBe('First question?');
+    expect(questionEl.value).toBe('');
+    
+    // Give it a tiny tick to hit the promise
+    await new Promise(r => setTimeout(r, 10));
+
+    // Second question while first is pending
+    questionEl.value = 'Second question?';
+    fireEvent.keyDown(questionEl, { key: 'Enter', code: 'Enter', charCode: 13 });
+    
+    expect(askedQuestionText.textContent).toBe('Second question?');
+    expect(questionEl.value).toBe('');
+    
+    // Give it a tiny tick for the second one to resolve
+    await new Promise(r => setTimeout(r, 10));
+    
+    // Now resolve first promise
+    resolveFirst('First AI answer');
+    
+    await waitFor(() => {
+      // It should display the second answer, not the first
+      expect(answerText.textContent.trim()).toBe('Second AI answer');
+    });
   });
 });

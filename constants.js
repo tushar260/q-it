@@ -1,0 +1,9 @@
+export const THEME_KEY = "qItThemeV1";
+export const DARK_MODE_KEY = "qItDarkModeV1";
+export const STORAGE_KEY = "qItContextV1";
+export const PENDING_QUESTION_KEY = "qItPendingQuestion";
+export const AUTOFILL_ENABLED_KEY = "qitAutofillEnabled";
+export const AUTOCLICK_ENABLED_KEY = "qitAutoclickEnabled";
+export const GENERAL_KNOWLEDGE_ENABLED_KEY = "qitGeneralKnowledgeEnabled";
+export const AUTOCOPY_ENABLED_KEY = "qitAutocopyEnabled";
+export const LIFETIME_KEY = "qItLifetimeIngestV1";

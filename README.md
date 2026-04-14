@@ -25,15 +25,29 @@
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="assets/mockup-screenshot.png" alt="Context Tab (Green Theme)" width="45%">
+  <img src="assets/v1.1/mockup-context-yellow.png" alt="Context Tab (Yellow Theme)" width="45%">
   &nbsp; &nbsp; &nbsp;
-  <img src="assets/mockup-question-tab.png" alt="Q&A Chat (Blue Theme)" width="45%">
+  <img src="assets/v1.1/mockup-question-pink.png" alt="Q&A Chat (Pink Theme)" width="45%">
 </p>
 <p align="center">
-  <img src="assets/mockup-yellow-theme.png" alt="Q&A Chat (Yellow Theme)" width="45%">
+  <img src="assets/v1.1/mockup-settings-green.png" alt="Settings Tab (Green Theme)" width="45%">
   &nbsp; &nbsp; &nbsp;
-  <img src="assets/mockup-pink-theme.png" alt="Settings Tab (Pink Theme)" width="45%">
+  <img src="assets/v1.1/mockup-settings-dark.png" alt="Settings Tab (Dark Mode)" width="45%">
 </p>
+
+## 🆕 What's New in v1.1
+
+- **Interactive Autofill:** The page-level autofill agent now has a toggleable setting to autonomously interact with forms (e.g., clicking "Add" buttons to reveal hidden fields).
+- **Streaming AI Responses:** Answers in the Q&A chat now stream in real-time, word-by-word.
+- **Auto-Copy Answer:** A new setting to automatically copy AI responses to your clipboard with a satisfying pop animation.
+- **Enhanced UI/UX:**
+  - Added a dedicated, animated **Dark Mode** toggle with a seamless circular wipe transition.
+  - Redesigned the "Clear Text" button as an inline icon inside the text area.
+  - Buttons ("Q" and "Save") are now neatly aligned to the right of their respective input boxes.
+  - The tab navigation bar is now sticky, remaining visible even when scrolling through long context history.
+  - Toggles and buttons now have clear focus states for improved keyboard accessibility.
+  - Added satisfying animations to the delete icons in the context history.
+- **Dynamic Statistics:** Context history stats now accurately reflect your currently saved snippets and files in real-time.
 
 ## ✨ Features
 

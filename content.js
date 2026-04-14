@@ -11,8 +11,7 @@ const QIT_THEMES = {
   green:  { bg: '#9dd4a8', border: '#8fd09a', text: '#143018', textMuted: '#4a5c4c', panelBg: '#f6fbf7', panelText: '#1e3020' },
   blue:   { bg: '#a0c0f0', border: '#98b8e8', text: '#142840', textMuted: '#4a5a68', panelBg: '#f7f9fd', panelText: '#1a2838' },
   pink:   { bg: '#e8b0d0', border: '#e0a0c8', text: '#381828', textMuted: '#685060', panelBg: '#fff5fa', panelText: '#3a2430' },
-  white:  { bg: '#dcdcdc', border: '#c6c6c6', text: '#1f1f1f', textMuted: '#6a6a6a', panelBg: '#fafafa', panelText: '#3a3a3a' },
-  black:  { bg: '#f2f2f2', border: '#707070', text: '#121212', textMuted: '#a0a0a0', panelBg: '#242424', panelText: '#e8e8e8' }
+  white:  { bg: '#dcdcdc', border: '#c6c6c6', text: '#1f1f1f', textMuted: '#6a6a6a', panelBg: '#fafafa', panelText: '#3a3a3a' }
 };
 
 let currentQitTheme = QIT_THEMES.yellow;
@@ -28,14 +27,14 @@ function applyThemeToUI() {
 
 try {
   chrome.storage.local.get("qItThemeV1", (res) => {
-    if (res && res.qItThemeV1 && QIT_THEMES[res.qItThemeV1]) {
-      currentQitTheme = QIT_THEMES[res.qItThemeV1];
+    if (res && res["qItThemeV1"] && QIT_THEMES[res["qItThemeV1"]]) {
+      currentQitTheme = QIT_THEMES[res["qItThemeV1"]];
       applyThemeToUI();
     }
   });
   chrome.storage.onChanged.addListener((changes) => {
-    if (changes.qItThemeV1 && QIT_THEMES[changes.qItThemeV1.newValue]) {
-      currentQitTheme = QIT_THEMES[changes.qItThemeV1.newValue];
+    if (changes["qItThemeV1"] && QIT_THEMES[changes["qItThemeV1"].newValue]) {
+      currentQitTheme = QIT_THEMES[changes["qItThemeV1"].newValue];
       applyThemeToUI();
     }
   });
@@ -418,7 +417,7 @@ function fillFieldRobustly(input, value) {
         // Optionally check if autofill is enabled via storage here
         chrome.storage.local.get("qitAutofillEnabled", (res) => {
           // Default to true if not set
-          if (res && res.qitAutofillEnabled === false) return;
+          if (res && res["qitAutofillEnabled"] === false) return;
           placeAutofillBtn(target);
         });
       } catch (err) {
@@ -515,7 +514,7 @@ function fillFieldRobustly(input, value) {
         const settings = await new Promise(resolve => {
           chrome.storage.local.get("qitAutoclickEnabled", (res) => resolve(res));
         });
-        const autoclickEnabled = settings.qitAutoclickEnabled !== false;
+        const autoclickEnabled = settings["qitAutoclickEnabled"] !== false;
 
         while (iterations < maxIterations) {
           iterations++;
@@ -850,7 +849,7 @@ function fillFieldRobustly(input, value) {
 
   // Initialize Page Autofill if enabled
   chrome.storage.local.get("qitAutofillEnabled", (res) => {
-    if (res.qitAutofillEnabled !== false) {
+    if (res["qitAutofillEnabled"] !== false) {
       // Adding a small delay to ensure DOM is mostly loaded before injecting FAB
       if (document.readyState === 'complete') {
         injectFAB();
