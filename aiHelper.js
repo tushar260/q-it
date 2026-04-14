@@ -29,7 +29,7 @@ export async function buildContextPayload(store) {
  * Handles the actual API call to the Gemini Nano language model
  * Can be reused for both popup chat and autofill features.
  */
-export async function callGeminiNano(context, question, isAutofill = false, isPageAutofill = false) {
+export async function callGeminiNano(context, question, isAutofill = false, isPageAutofill = false, allowGeneralKnowledge = false) {
   const LM = globalThis.LanguageModel || (globalThis.ai && globalThis.ai.languageModel);
   if (!LM || typeof LM.availability !== "function" || typeof LM.create !== "function") {
     throw new Error("Chrome’s on-device model isn’t exposed here. Use Chrome 138 or newer.");
@@ -55,21 +55,7 @@ export async function callGeminiNano(context, question, isAutofill = false, isPa
   try {
     const params = typeof LM.params === "function" ? await LM.params() : { defaultTemperature: undefined, defaultTopK: undefined };
     
-    // Default chat prompts
-    let initialPrompts = [
-      {
-        role: "system",
-        content: "You must fully adopt the persona of the person or entity described in the user's context. Answer all questions in the first person ('I', 'me', 'my'). If the user asks 'where do you work?', you must answer with your workplace from the context. Do not act as an assistant or AI. Do not refer to the subject in the third person ('he', 'she', 'they'). You ARE the subject."
-      },
-      {
-        role: "user",
-        content: `Here is my background context. From now on, act exactly as the person described in this text. Answer in the first-person ("I", "my"). NEVER say you are an AI or an assistant.\n\nCONTEXT:\n${contextForModel}`
-      },
-        {
-          role: "assistant",
-          content: "I understand. I am the person described in the context, and I will answer all questions from my own first-person perspective."
-        }
-    ];
+    let initialPrompts = [];
 
     // If it's an autofill request, we use a much stricter prompt
     if (isAutofill) {
@@ -98,6 +84,42 @@ export async function callGeminiNano(context, question, isAutofill = false, isPa
           content: "I have read the context and am ready to generate the JSON action object."
         }
       ];
+    } else {
+      if (allowGeneralKnowledge) {
+        initialPrompts = [
+          {
+            role: "system",
+            content: "You are a helpful AI assistant. If the user provides context, use it to answer their questions from their perspective. If the question is general knowledge and the answer is not in the context, you may use your general knowledge to answer it."
+          }
+        ];
+        
+        if (contextForModel && contextForModel.trim()) {
+          initialPrompts.push({
+            role: "user",
+            content: `CONTEXT:\n${contextForModel}`
+          });
+          initialPrompts.push({
+            role: "assistant",
+            content: "I have read the context and will use it to inform my answers, while also relying on my general knowledge if needed."
+          });
+        }
+      } else {
+        // Default chat prompts
+        initialPrompts = [
+          {
+            role: "system",
+            content: "You must fully adopt the persona of the person or entity described in the user's context. Answer all questions in the first person ('I', 'me', 'my'). If the user asks 'where do you work?', you must answer with your workplace from the context. Do not act as an assistant or AI. Do not refer to the subject in the third person ('he', 'she', 'they'). You ARE the subject."
+          },
+          {
+            role: "user",
+            content: `Here is my background context. From now on, act exactly as the person described in this text. Answer in the first-person ("I", "my"). NEVER say you are an AI or an assistant.\n\nCONTEXT:\n${contextForModel}`
+          },
+          {
+            role: "assistant",
+            content: "I understand. I am the person described in the context, and I will answer all questions from my own first-person perspective."
+          }
+        ];
+      }
     }
 
     const createOptions = {

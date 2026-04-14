@@ -233,6 +233,10 @@
       </div>
 
       <div id="answer-block" class="block block--answer" hidden>
+        <div id="asked-question-container" style="display: none; margin-bottom: 12px; padding: 10px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); font-size: 13px; color: var(--text);">
+          <span style="font-weight: 600; display: block; margin-bottom: 4px; color: var(--text-muted);">Question:</span>
+          <span id="asked-question-text" style="font-style: italic;"></span>
+        </div>
         <span class="label">Answer</span>
         <div class="answer-shell">
           <div id="answer-text" class="answer-body"></div>
@@ -299,6 +303,16 @@
           </div>
           <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 24px;">
             <input type="checkbox" id="autoclick-toggle" style="opacity: 0; width: 0; height: 0;" checked>
+            <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; transition: .4s; border-radius: 24px;"></span>
+          </label>
+        </div>
+        <div class="setting-row" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
+          <div>
+            <div style="font-weight: 500; margin-bottom: 4px;">General Knowledge</div>
+            <div style="font-size: 12px; color: var(--text-muted); max-width: 220px;">Allow the AI to answer common knowledge questions when the answer is not in your context.</div>
+          </div>
+          <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 24px;">
+            <input type="checkbox" id="general-knowledge-toggle" style="opacity: 0; width: 0; height: 0;">
             <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; transition: .4s; border-radius: 24px;"></span>
           </label>
         </div>

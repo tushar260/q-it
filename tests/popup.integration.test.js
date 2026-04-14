@@ -207,7 +207,7 @@ describe('popup.js integration tests', () => {
     });
   });
 
-  it('submits on Enter, shows loader, answers, and clears question box', async () => {
+  it('submits on Enter, shows loader, question block, answers, and clears question box', async () => {
     // Mock the LanguageModel API
     const mockSession = {
       prompt: jest.fn().mockResolvedValue('Mocked AI answer'),
@@ -224,6 +224,8 @@ describe('popup.js integration tests', () => {
     const questionEl = document.getElementById('question');
     const answerText = document.getElementById('answer-text');
     const answerBlock = document.getElementById('answer-block');
+    const askedQuestionContainer = document.getElementById('asked-question-container');
+    const askedQuestionText = document.getElementById('asked-question-text');
     
     document.getElementById('tab-question').click();
     questionEl.value = 'What is the context?';
@@ -231,8 +233,10 @@ describe('popup.js integration tests', () => {
     // Press Enter
     fireEvent.keyDown(questionEl, { key: 'Enter', code: 'Enter', charCode: 13 });
     
-    // Immediately after submission, loader should be visible
+    // Immediately after submission, loader and question should be visible
     expect(answerBlock.hidden).toBe(false);
+    expect(askedQuestionContainer.style.display).toBe('block');
+    expect(askedQuestionText.textContent).toBe('What is the context?');
     expect(answerText.innerHTML).toContain('loader-dot'); // Check for loader animation elements
     
     await waitFor(() => {

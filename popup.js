@@ -90,6 +90,8 @@ import { callGeminiNano } from './aiHelper.js';
   const answerBlock = document.getElementById("answer-block");
   const answerText = document.getElementById("answer-text");
   const answerError = document.getElementById("answer-error");
+  const askedQuestionContainer = document.getElementById("asked-question-container");
+  const askedQuestionText = document.getElementById("asked-question-text");
   const copyBtn = document.getElementById("copy-btn");
   const ingestStatus = document.getElementById("ingest-status");
   const saveContextBtn = document.getElementById("save-context-btn");
@@ -278,9 +280,23 @@ import { callGeminiNano } from './aiHelper.js';
   const PENDING_QUESTION_KEY = "qItPendingQuestion";
   const AUTOFILL_ENABLED_KEY = "qitAutofillEnabled";
   const AUTOCLICK_ENABLED_KEY = "qitAutoclickEnabled";
+  const GENERAL_KNOWLEDGE_ENABLED_KEY = "qitGeneralKnowledgeEnabled";
 
   const autofillToggle = document.getElementById("autofill-toggle");
   const autoclickToggle = document.getElementById("autoclick-toggle");
+  const generalKnowledgeToggle = document.getElementById("general-knowledge-toggle");
+
+  if (generalKnowledgeToggle) {
+    storageLocal.get(GENERAL_KNOWLEDGE_ENABLED_KEY).then((res) => {
+      const isEnabled = res[GENERAL_KNOWLEDGE_ENABLED_KEY] === true; // Default false
+      generalKnowledgeToggle.checked = isEnabled;
+    });
+
+    generalKnowledgeToggle.addEventListener("change", (e) => {
+      const isEnabled = e.target.checked;
+      storageLocal.set({ [GENERAL_KNOWLEDGE_ENABLED_KEY]: isEnabled });
+    });
+  }
 
   if (autofillToggle) {
     // Load initial state
@@ -705,16 +721,20 @@ import { callGeminiNano } from './aiHelper.js';
     if (!question.trim()) {
       return { ok: false, error: "Add a question on the Question tab." };
     }
-    if (!context.trim()) {
-      return {
-        ok: false,
-        error:
-          "No context found. Please provide context in the Context tab first.",
-      };
-    }
 
     try {
-      const text = await callGeminiNano(context, question, false);
+      const res = await storageLocal.get(GENERAL_KNOWLEDGE_ENABLED_KEY);
+      const allowGeneralKnowledge = res[GENERAL_KNOWLEDGE_ENABLED_KEY] === true;
+
+      if (!context.trim() && !allowGeneralKnowledge) {
+        return {
+          ok: false,
+          error:
+            "No context found. Please provide context in the Context tab first.",
+        };
+      }
+
+      const text = await callGeminiNano(context, question, false, false, allowGeneralKnowledge);
       return { ok: true, text };
     } catch (e) {
       return { ok: false, error: e.message || String(e) };
@@ -722,23 +742,41 @@ import { callGeminiNano } from './aiHelper.js';
   }
 
   let lastAnswer = "";
+  let askToken = 0;
 
   async function runAsk() {
     syncLiveContextFromTextarea();
     const context = buildContextPayload();
     const question = questionEl.value.trim();
 
+    if (!question) {
+      answerError.textContent = "Add a question on the Question tab.";
+      answerError.hidden = false;
+      return;
+    }
+
+    // Clear the input box immediately so user can type a new question
+    questionEl.value = "";
+
     setTab("question");
     answerError.hidden = true;
     answerText.innerHTML = '<div class="loader"><div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div></div>';
     lastAnswer = "";
     answerBlock.hidden = false;
+    
+    if (askedQuestionContainer && askedQuestionText) {
+      askedQuestionText.textContent = question;
+      askedQuestionContainer.style.display = "block";
+    }
 
-    askBtn.disabled = true;
+    const currentToken = ++askToken;
+
     try {
-      const result = await generateAnswer(context, question, (partial) => {
-        answerText.textContent = partial;
-      });
+      const result = await generateAnswer(context, question);
+      
+      // If the user asked another question while we were waiting, discard this result
+      if (currentToken !== askToken) return;
+
       if (!result.ok) {
         answerText.textContent = "";
         lastAnswer = "";
@@ -748,13 +786,12 @@ import { callGeminiNano } from './aiHelper.js';
       }
       lastAnswer = result.text;
       answerText.textContent = result.text;
-      questionEl.value = "";
     } catch (e) {
+      if (currentToken !== askToken) return;
+
       answerError.textContent =
         e instanceof Error ? e.message : "Something went wrong.";
       answerError.hidden = false;
-    } finally {
-      askBtn.disabled = false;
     }
   }
 
