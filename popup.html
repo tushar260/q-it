@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Q It</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body data-theme="yellow">
+  <main class="app">
+    <div
+      class="theme-bar"
+      role="radiogroup"
+      aria-label="Accent color"
+    >
+      <button
+        type="button"
+        class="theme-swatch theme-swatch--yellow is-selected"
+        data-theme="yellow"
+        role="radio"
+        aria-checked="true"
+        aria-label="Yellow"
+        title="Yellow"
+      ></button>
+      <button
+        type="button"
+        class="theme-swatch theme-swatch--red"
+        data-theme="red"
+        role="radio"
+        aria-checked="false"
+        aria-label="Red"
+        title="Red"
+      ></button>
+      <button
+        type="button"
+        class="theme-swatch theme-swatch--green"
+        data-theme="green"
+        role="radio"
+        aria-checked="false"
+        aria-label="Green"
+        title="Green"
+      ></button>
+      <button
+        type="button"
+        class="theme-swatch theme-swatch--blue"
+        data-theme="blue"
+        role="radio"
+        aria-checked="false"
+        aria-label="Blue"
+        title="Blue"
+      ></button>
+      <button
+        type="button"
+        class="theme-swatch theme-swatch--pink"
+        data-theme="pink"
+        role="radio"
+        aria-checked="false"
+        aria-label="Pink"
+        title="Pink"
+      ></button>
+      <button
+        type="button"
+        class="theme-swatch theme-swatch--white"
+        data-theme="white"
+        role="radio"
+        aria-checked="false"
+        aria-label="White"
+        title="White"
+      ></button>
+      <button
+        type="button"
+        class="theme-swatch theme-swatch--black"
+        data-theme="black"
+        role="radio"
+        aria-checked="false"
+        aria-label="Black"
+        title="Black"
+      ></button>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Q It sections">
+      <button
+        type="button"
+        class="tabs__btn is-active"
+        id="tab-context"
+        role="tab"
+        aria-selected="true"
+        aria-controls="panel-context"
+      >
+        Context
+      </button>
+      <button
+        type="button"
+        class="tabs__btn"
+        id="tab-question"
+        role="tab"
+        aria-selected="false"
+        aria-controls="panel-question"
+      >
+        Question
+      </button>
+      <button
+        type="button"
+        class="tabs__btn"
+        id="tab-settings"
+        role="tab"
+        aria-selected="false"
+        aria-controls="panel-settings"
+      >
+        Settings
+      </button>
+    </div>
+
+    <section
+      id="panel-context"
+      class="tab-panel"
+      role="tabpanel"
+      aria-labelledby="tab-context"
+    >
+      <div class="block">
+        <span class="label">Context</span>
+        <div class="context-shell">
+          <textarea
+            id="context-text"
+            class="field field--context"
+            rows="3"
+            placeholder="Paste notes, resume excerpt, job description…"
+            spellcheck="true"
+          ></textarea>
+          <input
+            id="file-input"
+            class="file-input-hidden"
+            type="file"
+            tabindex="-1"
+            multiple
+            accept=".txt,.md,.json,.csv,.js,.ts,.py,.html,.css,.xml,.yml,.yaml,text/*"
+            aria-hidden="true"
+          />
+          <button
+            type="button"
+            id="attach-btn"
+            class="attach-icon-btn"
+            aria-label="Attach files"
+            title="Attach files"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                fill="currentColor"
+                d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"
+              />
+            </svg>
+          </button>
+        </div>
+        <div class="context-actions">
+          <button type="button" id="save-context-btn" class="btn btn--secondary" title="Appends text to history">
+            Save text
+          </button>
+          <button type="button" id="clear-text-btn" class="btn btn--secondary btn--clear" style="opacity: 0.8; position: relative;" title="Clears the text box">
+            <span class="btn__text">Clear text</span>
+            <svg class="btn__icon--check" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none;">
+              <path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19L21 7l-1.41-1.41z"/>
+            </svg>
+          </button>
+        </div>
+        
+        <div id="history-container" style="display: none; margin-top: 16px;">
+          <!-- Text History -->
+          <div class="history-section" id="text-history-section" style="display: none;">
+            <div class="label-row" style="margin-bottom: 6px;">
+              <span class="label">Text snippets</span>
+              <button type="button" id="delete-all-text-btn" class="icon-btn--small" title="Delete all text snippets">
+                <svg width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+              </button>
+            </div>
+            <ul id="text-history-list" class="history-list" aria-live="polite"></ul>
+          </div>
+
+          <!-- File History -->
+          <div class="history-section" id="file-history-section" style="display: none; margin-top: 12px;">
+            <div class="label-row" style="margin-bottom: 6px;">
+              <span class="label">Files</span>
+              <button type="button" id="delete-all-files-btn" class="icon-btn--small" title="Delete all files">
+                <svg width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+              </button>
+            </div>
+            <ul id="file-list" class="history-list" aria-live="polite"></ul>
+          </div>
+        </div>
+
+        <div class="context-stats" id="context-stats" aria-live="polite">
+          <div class="context-stats__row">
+            <span class="context-stats__label">Text (lifetime)</span>
+            <span id="stat-text-detail" class="context-stats__value"></span>
+          </div>
+          <div class="context-stats__row">
+            <span class="context-stats__label">Files (lifetime)</span>
+            <span id="stat-files-detail" class="context-stats__value"></span>
+          </div>
+        </div>
+
+        <p id="ingest-status" class="ingest-status" hidden role="status"></p>
+      </div>
+    </section>
+
+    <section
+      id="panel-question"
+      class="tab-panel tab-panel--question"
+      role="tabpanel"
+      aria-labelledby="tab-question"
+      hidden
+    >
+      <div class="block block--question-input">
+        <textarea
+          id="question"
+          class="field"
+          rows="3"
+          placeholder="What should we answer?"
+          aria-label="Question"
+          spellcheck="true"
+        ></textarea>
+        <button type="button" id="ask-btn" class="btn btn--primary">Ask</button>
+      </div>
+
+      <div id="answer-block" class="block block--answer" hidden>
+        <span class="label">Answer</span>
+        <div class="answer-shell">
+          <div id="answer-text" class="answer-body"></div>
+          <button
+            type="button"
+            id="copy-btn"
+            class="copy-icon-btn"
+            aria-label="Copy answer"
+            title="Copy answer"
+          >
+            <svg
+              class="copy-icon-btn__icon copy-icon-btn__icon--copy"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                fill="currentColor"
+                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"
+              />
+            </svg>
+            <svg
+              class="copy-icon-btn__icon copy-icon-btn__icon--check"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                fill="currentColor"
+                d="M9 16.17L4.83 12l-1.42 1.41L9 19L21 7l-1.41-1.41z"
+              />
+            </svg>
+          </button>
+        </div>
+        <p id="answer-error" class="error" hidden></p>
+      </div>
+    </section>
+
+    <section
+      id="panel-settings"
+      class="tab-panel"
+      role="tabpanel"
+      aria-labelledby="tab-settings"
+      hidden
+    >
+      <div class="block">
+        <span class="label">Settings</span>
+        <div class="setting-row" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
+          <div>
+            <div style="font-weight: 500; margin-bottom: 4px;">Inline Autofill</div>
+            <div style="font-size: 12px; color: var(--text-muted); max-width: 220px;">Show the Q icon in text fields to generate AI suggestions based on your context.</div>
+          </div>
+          <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 24px;">
+            <input type="checkbox" id="autofill-toggle" style="opacity: 0; width: 0; height: 0;">
+            <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; transition: .4s; border-radius: 24px;"></span>
+          </label>
+        </div>
+        <div class="setting-row" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
+          <div>
+            <div style="font-weight: 500; margin-bottom: 4px;">Auto-Click 'Add' Buttons</div>
+            <div style="font-size: 12px; color: var(--text-muted); max-width: 220px;">Allow AI to click 'Add Work Experience' or 'Add Education' if fields are missing. Disabling this makes autofill faster.</div>
+          </div>
+          <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 24px;">
+            <input type="checkbox" id="autoclick-toggle" style="opacity: 0; width: 0; height: 0;" checked>
+            <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; transition: .4s; border-radius: 24px;"></span>
+          </label>
+        </div>
+        <style>
+          .switch .slider { background-color: #d1d1d1; }
+          body[data-theme="black"] .switch .slider { background-color: #555; }
+          .switch input:checked + .slider { background-color: var(--lemon); }
+          .switch input:focus + .slider { box-shadow: 0 0 1px var(--lemon); }
+          .switch .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: var(--bg); transition: .4s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+          .switch input:checked + .slider:before { transform: translateX(16px); }
+        </style>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

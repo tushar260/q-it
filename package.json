@@ -1,0 +1,27 @@
+{
+  "name": "q-it",
+  "version": "1.0.0",
+  "description": "A Chrome extension that lets you ingest context (text, files, or page selections) and ask questions about it directly using Chrome's built-in on-device AI (Gemini Nano).",
+  "main": "background.js",
+  "scripts": {
+    "test": "jest",
+    "build": "webpack --mode production",
+    "dev": "webpack --mode development --watch",
+    "pack": "npm run build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "babel-loader": "^10.1.1",
+    "copy-webpack-plugin": "^14.0.0",
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0",
+    "terser-webpack-plugin": "^5.4.0",
+    "webpack": "^5.106.1",
+    "webpack-cli": "^7.0.2",
+    "zip-webpack-plugin": "^4.0.3"
+  }
+}
