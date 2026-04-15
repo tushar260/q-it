@@ -94,7 +94,7 @@ Because Q It relies on experimental on-device AI, you need a compatible version 
 ### Installation
 1. Clone this repository:
    ```bash
-   git clone https://github.com/your-username/q-it.git
+   git clone https://github.com/tushar260/q-it.git
    ```
 2. Open Chrome and navigate to `chrome://extensions/`.
 3. Enable **Developer mode** in the top right corner.
