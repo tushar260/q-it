@@ -82,14 +82,10 @@ Q It features a clean, minimal UI inspired by Google Sans. Choose from **7 gorge
 ## 🚀 Getting Started
 
 ### Prerequisites
-Because Q It relies on experimental on-device AI, you need a compatible version of Chrome with the Prompt API enabled.
+Because Q It relies on Chrome's built-in on-device AI (Gemini Nano), you simply need a recent version of Google Chrome.
 
-1. Download **Chrome Dev** or **Chrome Canary** (version 128+ or 138+ recommended).
-2. Go to `chrome://flags/` and enable the following flags:
-   - **Prompt API for Gemini Nano** (`#prompt-api-for-gemini-nano`) -> **Enabled**
-   - **Enables optimization guide on device** (`#optimization-guide-on-device-model`) -> **Enabled BypassPrefRequirement**
-3. Relaunch Chrome.
-4. Go to `chrome://components/` and ensure the **Optimization Guide On Device Model** is fully downloaded.
+1. Ensure you are running **Google Chrome version 138** or newer. (You can check your version at `chrome://settings/help`).
+2. That's it! No experimental flags or developer builds are required.
 
 ### Installation
 1. Clone this repository:
