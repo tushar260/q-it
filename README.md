@@ -52,7 +52,7 @@
 ## ✨ Features
 
 ### 🔒 100% Local & Private
-Q It uses the **Chrome Prompt API (Gemini Nano)**. All AI inference happens directly on your machine. Your resume, personal details, and uploaded files never leave your browser, ensuring complete privacy and security.
+**Q It** uses the **Chrome Prompt API (Gemini Nano)**. All AI inference happens directly on your machine. Your resume, personal details, and uploaded files never leave your browser, ensuring complete privacy and security.
 
 ### 🧠 Universal Memory Context
 Build your personal knowledge base in seconds:
@@ -61,28 +61,28 @@ Build your personal knowledge base in seconds:
 - **Persistent Storage:** Your context is saved locally across browsing sessions.
 
 ### ⚡ Smart Inline Autofill
-Filling out a job application? Q It intelligently detects profile and job-related fields (Name, LinkedIn URL, Experience, etc.). Simply focus on an input field, and a smart dropdown will suggest the perfect answer based on your stored context.
+Filling out a job application? **Q It** intelligently detects profile and job-related fields (Name, LinkedIn URL, Experience, etc.). Simply focus on an input field, and a smart dropdown will suggest the perfect answer based on your stored context.
 
 ### 🤖 Autonomous Page-Level Autofill (ATS Optimized)
 Tired of manually filling out Workday, Lever, or Greenhouse applications? 
-Click the floating **Q** button on any form page. Q It will:
+Click the floating **Q** button on any form page. **Q It** will:
 1. **Scan** the entire page for input fields.
 2. **Read** your context to determine the best answers.
 3. **Autonomously click** "Add Another" buttons (like "Add Work Experience" or "Add Education") if the form doesn't have enough fields for your entire history.
 4. **Present** a review modal for you to approve and instantly apply all suggestions.
 
 ### 💬 Q&A Chat
-Open the Q It popup to chat directly with your context. Ask *"What is my latest job title?"* or *"Summarize my experience with AWS"*, and the AI will answer strictly from your provided documents, adopting a first-person persona.
+Open the **Q It** popup to chat directly with your context. Ask *"What is my latest job title?"* or *"Summarize my experience with AWS"*, and the AI will answer strictly from your provided documents, adopting a first-person persona.
 
 ### 🎨 Beautiful & Customizable
-Q It features a clean, minimal UI inspired by Google Sans. Choose from **7 gorgeous pastel themes** (Yellow, Red, Green, Blue, Pink, White, Black) to match your browser's aesthetic.
+**Q It** features a clean, minimal UI inspired by Google Sans. Choose from **7 gorgeous pastel themes** (Yellow, Red, Green, Blue, Pink, White, Black) to match your browser's aesthetic.
 
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-Because Q It relies on Chrome's built-in on-device AI (Gemini Nano), you simply need a recent version of Google Chrome.
+Because **Q It** relies on Chrome's built-in on-device AI (Gemini Nano), you simply need a recent version of Google Chrome.
 
 1. Ensure you are running **Google Chrome version 138** or newer. (You can check your version at `chrome://settings/help`).
 2. That's it! No experimental flags or developer builds are required.
@@ -110,7 +110,7 @@ Click the **Q It** extension icon to open the popup. Navigate to the **Context**
 ### 2. Autofill Forms Instantly
 Head over to a job board or any complex form (e.g., Workday or Greenhouse).
 - **Inline Autofill:** Simply focus on a text input (like "First Name" or "Experience"). A tiny dropdown will appear with the AI's perfect suggestion. Click **"Apply"**.
-- **Page Autofill:** Click the floating **Q icon** at the bottom right of the page. Q It will autonomously scan the entire page, calculate all fields, automatically click "Add another" buttons if needed, and show you a final review modal. Click **"Apply Selected"** to fill the entire page in one go.
+- **Page Autofill:** Click the floating **Q icon** at the bottom right of the page. **Q It** will autonomously scan the entire page, calculate all fields, automatically click "Add another" buttons if needed, and show you a final review modal. Click **"Apply Selected"** to fill the entire page in one go.
 
 ### 3. Chat with Your Data
 Need a quick summary? Open the extension and switch to the **Question** tab. Ask the AI anything about your context, and it will respond directly in your persona. You can easily copy the answer or use the context menu to send questions straight from the webpage.
@@ -119,7 +119,7 @@ Need a quick summary? Open the extension and switch to the **Question** tab. Ask
 
 ## ⚙️ Configuration
 
-Open the Q It popup and navigate to the **Settings** tab (gear icon) to configure:
+Open the **Q It** popup and navigate to the **Settings** tab (gear icon) to configure:
 - **Themes:** Pick your favorite accent color.
 - **Autofill Toggle:** Easily toggle inline autofill on or off.
 - **Auto-Click 'Add' Buttons:** Enable/disable autonomous DOM interactions (disabling this makes page-level autofill faster by skipping clicking buttons).
@@ -128,7 +128,7 @@ Open the Q It popup and navigate to the **Settings** tab (gear icon) to configur
 
 ## 🧪 Testing
 
-Q It includes a robust suite of unit and end-to-end tests using **Jest** and **Puppeteer**.
+**Q It** includes a robust suite of unit and end-to-end tests using **Jest** and **Puppeteer**.
 
 ```bash
 cd q-it
