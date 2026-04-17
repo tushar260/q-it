@@ -22,27 +22,29 @@
 
 **Q It** is a powerful, privacy-first Chrome extension that leverages Chrome's built-in on-device AI (Gemini Nano). It helps you instantly fill out complex forms, job applications, and answer questions based solely on your personal context—**without ever sending your data to the cloud.**
 
-## 📸 Demo & Screenshots
+## 📸 Demo Videos
 
 ### 1. Persona Mode
 <p align="center">
-  <video src="https://github.com/tushar260/q-it/raw/main/assets/v1.1.1/demo-01-persona-mode.mp4" autoplay loop muted playsinline width="80%"></video>
+  <img src="assets/v1.1.1/gifs/demo-01-persona-mode.gif" width="80%" alt="Demo 1: Persona Mode">
 </p>
 
 ### 2. The Core Flow
 <p align="center">
-  <video src="https://github.com/tushar260/q-it/raw/main/assets/v1.1.1/demo-02-core-flow.mp4" autoplay loop muted playsinline width="80%"></video>
+  <img src="assets/v1.1.1/gifs/demo-02-core-flow.gif" width="80%" alt="Demo 2: Core Flow">
 </p>
 
 ### 3. File Upload Context
 <p align="center">
-  <video src="https://github.com/tushar260/q-it/raw/main/assets/v1.1.1/demo-03-file-context.mp4" autoplay loop muted playsinline width="80%"></video>
+  <img src="assets/v1.1.1/gifs/demo-03-file-context.gif" width="80%" alt="Demo 3: File Upload Context">
 </p>
 
 ### 4. Smart Autofill & Auto-Click
 <p align="center">
-  <video src="https://github.com/tushar260/q-it/raw/main/assets/v1.1.1/demo-04-autofill-toggles.mp4" autoplay loop muted playsinline width="80%"></video>
+  <img src="assets/v1.1.1/gifs/demo-04-autofill-toggles.gif" width="80%" alt="Demo 4: Smart Autofill">
 </p>
+
+## 🖼️ Screenshots
 
 <p align="center">
   <img src="assets/v1.1.1/mockup-context-yellow.png" alt="Context Tab (Yellow Theme)" width="45%">
