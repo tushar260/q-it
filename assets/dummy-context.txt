@@ -1,0 +1,1 @@
+Scrut Automation is a risk observability and compliance automation platform built to simplify information security for cloud-native companies. It provides unified visibility into compliance posture and streamlines audits.

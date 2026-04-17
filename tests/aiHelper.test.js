@@ -95,12 +95,12 @@ describe('aiHelper.js tests', () => {
       expect(systemPrompt).toContain("You have two options");
     });
 
-    it('uses general knowledge prompt when allowGeneralKnowledge is true', async () => {
+    it('uses general intelligence prompt when allowGeneralKnowledge is true', async () => {
       await callGeminiNano('My context', 'My question', false, false, true);
       
       const createOptions = globalThis.LanguageModel.create.mock.calls[0][0];
       const systemPrompt = createOptions.initialPrompts.find(p => p.role === 'system').content;
-      expect(systemPrompt).toContain("you may use your general knowledge");
+      expect(systemPrompt).toContain("you may use your general intelligence");
     });
   });
 

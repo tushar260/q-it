@@ -91,7 +91,7 @@ export async function callGeminiNano(context, question, isAutofill = false, isPa
         initialPrompts = [
           {
             role: "system",
-            content: "You are a helpful AI assistant. If the user provides context, use it to answer their questions from their perspective. If the question is general knowledge and the answer is not in the context, you may use your general knowledge to answer it."
+            content: "You are a helpful AI assistant. If the user provides context, use it to answer their questions from their perspective. If the question is general intelligence and the answer is not in the context, you may use your general intelligence to answer it."
           }
         ];
         
@@ -102,7 +102,7 @@ export async function callGeminiNano(context, question, isAutofill = false, isPa
           });
           initialPrompts.push({
             role: "assistant",
-            content: "I have read the context and will use it to inform my answers, while also relying on my general knowledge if needed."
+            content: "I have read the context and will use it to inform my answers, while also relying on my general intelligence if needed."
           });
         }
       } else {

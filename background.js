@@ -1,5 +1,5 @@
 import { buildContextPayload, callGeminiNano, extractJsonFromText } from './aiHelper.js';
-import { STORAGE_KEY, PENDING_QUESTION_KEY } from './constants.js';
+import { STORAGE_KEY, PENDING_QUESTION_KEY, PENDING_TAB_KEY } from './constants.js';
 
 const MENU_APPEND = "qit-append";
 const MENU_QUESTION = "qit-question";
@@ -54,15 +54,18 @@ async function handleQitAction(text, action, windowId) {
 
   if (action === "append") {
     await appendSelectionToContext(safe, store);
+    await store.set({ [PENDING_TAB_KEY]: "context" });
   } else if (action === "question") {
     await store.set({ [PENDING_QUESTION_KEY]: safe });
-    try {
-      if (chrome.action && chrome.action.openPopup && windowId) {
-        await chrome.action.openPopup({ windowId });
-      }
-    } catch (e) {
-      console.warn("Could not auto-open popup:", e);
+    await store.set({ [PENDING_TAB_KEY]: "question" });
+  }
+
+  try {
+    if (chrome.action && chrome.action.openPopup && windowId) {
+      await chrome.action.openPopup({ windowId });
     }
+  } catch (e) {
+    console.warn("Could not auto-open popup:", e);
   }
 }
 
@@ -70,7 +73,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   const text =
     typeof info.selectionText === "string" ? info.selectionText : "";
   if (info.menuItemId === MENU_APPEND) {
-    void handleQitAction(text, "append");
+    void handleQitAction(text, "append", tab?.windowId);
   } else if (info.menuItemId === MENU_QUESTION) {
     void handleQitAction(text, "question", tab?.windowId);
   }
@@ -83,13 +86,13 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return false;
   }
   if (msg?.type === "qit-append" && typeof msg.text === "string") {
-    void handleQitAction(msg.text, "append")
+    void handleQitAction(msg.text, "append", _sender?.tab?.windowId)
       .then(() => sendResponse({ ok: true }))
       .catch(() => sendResponse({ ok: false }));
     return true;
   }
   if (msg?.type === "qit-question" && typeof msg.text === "string") {
-    void handleQitAction(msg.text, "question")
+    void handleQitAction(msg.text, "question", _sender?.tab?.windowId)
       .then(() => sendResponse({ ok: true }))
       .catch(() => sendResponse({ ok: false }));
     return true;

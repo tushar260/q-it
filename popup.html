@@ -12,7 +12,7 @@
   />
   <link rel="stylesheet" href="popup.css" />
 </head>
-<body data-theme="yellow">
+<body class="preload" data-theme="yellow">
   <main class="app">
     <div class="tabs-wrapper">
       <div class="tabs" role="tablist" aria-label="Q It sections" data-active="question">
@@ -55,24 +55,12 @@
       role="tabpanel"
       aria-labelledby="tab-question"
     >
-      <div class="block--question-input">
-        <textarea
-          id="question"
-          class="field"
-          rows="3"
-          placeholder="What should we answer?"
-          aria-label="Question"
-          spellcheck="true"
-        ></textarea>
-        <button type="button" id="ask-btn" class="btn btn--primary">Q</button>
-      </div>
-
       <div id="answer-block" class="block block--answer" hidden>
-        <div id="asked-question-container" style="display: none; margin-bottom: 12px; padding: 10px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); font-size: 13px; color: var(--text);">
-          <span style="font-weight: 600; display: block; margin-bottom: 4px; color: var(--text-muted);">Question:</span>
-          <span id="asked-question-text" style="font-style: italic;"></span>
+        <div id="asked-question-container" style="display: none; margin-bottom: 12px; flex-direction: column; align-items: flex-end;">
+          <div style="padding: 10px 12px; background: var(--lemon-soft); border-radius: 14px 14px 2px 14px; border: 1px solid var(--border-strong); font-size: 13px; color: var(--text); word-break: break-word; max-width: 85%; box-sizing: border-box;">
+            <span id="asked-question-text"></span>
+          </div>
         </div>
-        <span class="label">Answer</span>
         <div class="answer-shell">
           <div id="answer-text" class="answer-body"></div>
           <button
@@ -109,6 +97,17 @@
           </button>
         </div>
         <p id="answer-error" class="error" hidden></p>
+      </div>
+
+      <div class="block--question-input">
+        <textarea
+          id="question"
+          class="field"
+          rows="3"
+          placeholder="What should we answer?"
+          aria-label="Question"
+          spellcheck="true"
+        ></textarea>
       </div>
     </section>
 
@@ -168,16 +167,13 @@
               </svg>
             </button>
           </div>
-          <button type="button" id="save-context-btn" class="btn btn--secondary" title="Appends text to history">
-            Q
-          </button>
         </div>
         
         <div id="history-container" style="display: none; margin-top: 16px;">
           <!-- Text History -->
           <div class="history-section" id="text-history-section" style="display: none;">
             <div class="label-row" style="margin-bottom: 6px;">
-              <span class="label">Text snippets</span>
+              <span class="label">Text snippets<span id="stat-text-detail" style="font-weight: normal; text-transform: none; font-size: 11px; margin-left: 6px; color: var(--text-muted);"></span></span>
               <button type="button" id="delete-all-text-btn" class="icon-btn--small" title="Delete all text snippets">
                 <svg width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
               </button>
@@ -188,23 +184,12 @@
           <!-- File History -->
           <div class="history-section" id="file-history-section" style="display: none; margin-top: 12px;">
             <div class="label-row" style="margin-bottom: 6px;">
-              <span class="label">Files</span>
+              <span class="label">Files<span id="stat-files-detail" style="font-weight: normal; text-transform: none; font-size: 11px; margin-left: 6px; color: var(--text-muted);"></span></span>
               <button type="button" id="delete-all-files-btn" class="icon-btn--small" title="Delete all files">
                 <svg width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
               </button>
             </div>
             <ul id="file-list" class="history-list" aria-live="polite"></ul>
-          </div>
-        </div>
-
-        <div class="context-stats" id="context-stats" aria-live="polite">
-          <div class="context-stats__row">
-            <span class="context-stats__label">Text</span>
-            <span id="stat-text-detail" class="context-stats__value"></span>
-          </div>
-          <div class="context-stats__row">
-            <span class="context-stats__label">Files</span>
-            <span id="stat-files-detail" class="context-stats__value"></span>
           </div>
         </div>
 
@@ -220,142 +205,135 @@
       hidden
     >
       <div class="block">
-        <div class="setting-row" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
-          <div>
-            <div style="font-weight: 500; margin-bottom: 4px;">General Knowledge</div>
-            <div style="font-size: 12px; color: var(--text-muted); max-width: 220px;">Allow the AI to answer common knowledge questions when the answer is not in your context.</div>
+        <details class="settings-section" id="details-general" open>
+          <summary>General</summary>
+          <div class="setting-row">
+            <div>
+              <div style="font-weight: 500; margin-bottom: 4px;">Persona Mode</div>
+              <div style="font-size: 12px; color: var(--text-muted); max-width: 220px;">When enabled, the AI strictly impersonates you using your context. When disabled, it can answer general questions outside your context.</div>
+            </div>
+            <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 24px;">
+              <input type="checkbox" id="persona-mode-toggle" style="opacity: 0; width: 0; height: 0;">
+              <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; transition: .4s; border-radius: 24px;"></span>
+            </label>
           </div>
-          <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 24px;">
-            <input type="checkbox" id="general-knowledge-toggle" style="opacity: 0; width: 0; height: 0;">
-            <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; transition: .4s; border-radius: 24px;"></span>
-          </label>
-        </div>
-        <div class="setting-row" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
-          <div>
-            <div style="font-weight: 500; margin-bottom: 4px;">Auto-Copy Answer</div>
-            <div style="font-size: 12px; color: var(--text-muted); max-width: 220px;">Automatically copy the generated answer to your clipboard.</div>
+          <div class="setting-row">
+            <div>
+              <div style="font-weight: 500; margin-bottom: 4px;">Auto-Copy Answer</div>
+              <div style="font-size: 12px; color: var(--text-muted); max-width: 220px;">Automatically copy the generated answer to your clipboard.</div>
+            </div>
+            <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 24px;">
+              <input type="checkbox" id="autocopy-toggle" style="opacity: 0; width: 0; height: 0;">
+              <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; transition: .4s; border-radius: 24px;"></span>
+            </label>
           </div>
-          <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 24px;">
-            <input type="checkbox" id="autocopy-toggle" style="opacity: 0; width: 0; height: 0;">
-            <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; transition: .4s; border-radius: 24px;"></span>
-          </label>
-        </div>
-        <div class="setting-row" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
-          <div>
-            <div style="font-weight: 500; margin-bottom: 4px;">Inline Autofill</div>
-            <div style="font-size: 12px; color: var(--text-muted); max-width: 220px;">Show the Q icon in text fields to generate AI suggestions based on your context.</div>
+        </details>
+
+        <details class="settings-section" id="details-autofill" open>
+          <summary>Autofill</summary>
+          <div class="setting-row">
+            <div>
+              <div style="font-weight: 500; margin-bottom: 4px;">Inline Autofill</div>
+              <div style="font-size: 12px; color: var(--text-muted); max-width: 220px;">Show the Q icon in text fields to generate AI suggestions based on your context.</div>
+            </div>
+            <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 24px;">
+              <input type="checkbox" id="autofill-toggle" style="opacity: 0; width: 0; height: 0;">
+              <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; transition: .4s; border-radius: 24px;"></span>
+            </label>
           </div>
-          <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 24px;">
-            <input type="checkbox" id="autofill-toggle" style="opacity: 0; width: 0; height: 0;">
-            <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; transition: .4s; border-radius: 24px;"></span>
-          </label>
-        </div>
-        <div class="setting-row" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
-          <div>
-            <div style="font-weight: 500; margin-bottom: 4px;">Interactive Autofill</div>
-            <div style="font-size: 12px; color: var(--text-muted); max-width: 220px;">Allow Q to interact with forms, such as clicking "Add" buttons to reveal hidden fields. Disabling this makes autofill faster.</div>
+          <div class="setting-row">
+            <div>
+              <div style="font-weight: 500; margin-bottom: 4px;">Interactive Autofill</div>
+              <div style="font-size: 12px; color: var(--text-muted); max-width: 220px;">Allow Q to interact with forms, such as clicking "Add" buttons to reveal hidden fields. Disabling this makes autofill faster.</div>
+            </div>
+            <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 24px;">
+              <input type="checkbox" id="autoclick-toggle" style="opacity: 0; width: 0; height: 0;" checked>
+              <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; transition: .4s; border-radius: 24px;"></span>
+            </label>
           </div>
-          <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 24px;">
-            <input type="checkbox" id="autoclick-toggle" style="opacity: 0; width: 0; height: 0;" checked>
-            <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; transition: .4s; border-radius: 24px;"></span>
-          </label>
-        </div>
-        <div class="setting-row" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0 16px; border-bottom: 1px solid var(--border);">
-          <div style="flex: 1; margin-right: 12px;">
-            <div style="font-weight: 500; margin-bottom: 4px;">Theme Color</div>
-            <div style="font-size: 12px; color: var(--text-muted); max-width: 220px;">Choose your accent color.</div>
+        </details>
+
+        <details class="settings-section" id="details-appearance" open>
+          <summary>Appearance</summary>
+          <div class="setting-row" style="align-items: flex-start;">
+            <div style="flex: 1; margin-right: 12px;">
+              <div style="font-weight: 500; margin-bottom: 4px;">Theme Color</div>
+              <div style="font-size: 12px; color: var(--text-muted); max-width: 220px;">Choose your accent color.</div>
+            </div>
+            <div
+              class="theme-bar"
+              role="radiogroup"
+              aria-label="Accent color"
+              style="flex-wrap: wrap; justify-content: flex-end;"
+            >
+              <button
+                type="button"
+                class="theme-swatch theme-swatch--yellow is-selected"
+                data-theme="yellow"
+                role="radio"
+                aria-checked="true"
+                aria-label="Yellow"
+                title="Yellow"
+              ></button>
+              <button
+                type="button"
+                class="theme-swatch theme-swatch--green"
+                data-theme="green"
+                role="radio"
+                aria-checked="false"
+                aria-label="Green"
+                title="Green"
+              ></button>
+              <button
+                type="button"
+                class="theme-swatch theme-swatch--blue"
+                data-theme="blue"
+                role="radio"
+                aria-checked="false"
+                aria-label="Blue"
+                title="Blue"
+              ></button>
+              <button
+                type="button"
+                class="theme-swatch theme-swatch--pink"
+                data-theme="pink"
+                role="radio"
+                aria-checked="false"
+                aria-label="Pink"
+                title="Pink"
+              ></button>
+              <button
+                type="button"
+                class="theme-swatch theme-swatch--white"
+                data-theme="white"
+                role="radio"
+                aria-checked="false"
+                aria-label="White"
+                title="White"
+              ></button>
+            </div>
           </div>
-          <div
-            class="theme-bar"
-            role="radiogroup"
-            aria-label="Accent color"
-            style="flex-wrap: wrap; justify-content: flex-end;"
-          >
+          <div class="setting-row">
+            <div>
+              <div style="font-weight: 500; margin-bottom: 4px;">Dark Mode</div>
+              <div style="font-size: 12px; color: var(--text-muted); max-width: 220px;">Toggle dark mode for the extension.</div>
+            </div>
             <button
               type="button"
-              class="theme-swatch theme-swatch--yellow is-selected"
-              data-theme="yellow"
-              role="radio"
-              aria-checked="true"
-              aria-label="Yellow"
-              title="Yellow"
-            ></button>
-            <button
-              type="button"
-              class="theme-swatch theme-swatch--red"
-              data-theme="red"
-              role="radio"
-              aria-checked="false"
-              aria-label="Red"
-              title="Red"
-            ></button>
-            <button
-              type="button"
-              class="theme-swatch theme-swatch--green"
-              data-theme="green"
-              role="radio"
-              aria-checked="false"
-              aria-label="Green"
-              title="Green"
-            ></button>
-            <button
-              type="button"
-              class="theme-swatch theme-swatch--blue"
-              data-theme="blue"
-              role="radio"
-              aria-checked="false"
-              aria-label="Blue"
-              title="Blue"
-            ></button>
-            <button
-              type="button"
-              class="theme-swatch theme-swatch--pink"
-              data-theme="pink"
-              role="radio"
-              aria-checked="false"
-              aria-label="Pink"
-              title="Pink"
-            ></button>
-            <button
-              type="button"
-              class="theme-swatch theme-swatch--white"
-              data-theme="white"
-              role="radio"
-              aria-checked="false"
-              aria-label="White"
-              title="White"
-            ></button>
+              class="dark-mode-toggle"
+              id="dark-mode-toggle"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>
+              <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+            </button>
           </div>
-        </div>
-        <div class="setting-row" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0;">
-          <div>
-            <div style="font-weight: 500; margin-bottom: 4px;">Dark Mode</div>
-            <div style="font-size: 12px; color: var(--text-muted); max-width: 220px;">Toggle dark mode for the extension.</div>
-          </div>
-          <button
-            type="button"
-            class="dark-mode-toggle"
-            id="dark-mode-toggle"
-            aria-label="Toggle dark mode"
-            title="Toggle dark mode"
-          >
-            <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>
-            <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
-          </button>
-        </div>
-        <style>
-          .switch .slider { background-color: #d1d1d1; }
-          body[data-mode="dark"] .switch .slider { background-color: #555; }
-          .switch input:checked + .slider { background-color: var(--lemon); }
-          body[data-theme="white"] .switch input:checked + .slider { background-color: #1a1a1a; }
-          body[data-mode="dark"][data-theme="white"] .switch input:checked + .slider { background-color: #f2f2f2; }
-          .switch input:focus-visible + .slider { box-shadow: 0 0 0 3px var(--focus-ring); outline: none; }
-          .switch .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: var(--bg); transition: .4s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-          .switch input:checked + .slider:before { transform: translateX(16px); }
-        </style>
+        </details>
       </div>
     </section>
   </main>
+  <script src="popup-init.js"></script>
   <script src="lib/marked.umd.js"></script>
   <script src="lib/purify.min.js"></script>
   <script type="module" src="popup.js"></script>

@@ -14,6 +14,7 @@ describe('popup.js integration tests', () => {
 
   beforeEach(() => {
     jest.resetModules();
+    window.confirm = jest.fn().mockReturnValue(true);
     aiHelper = require('../aiHelper.js');
     const popupHtml = fs.readFileSync(path.resolve(__dirname, '../popup.html'), 'utf8');
     document.body.innerHTML = popupHtml;
@@ -45,15 +46,14 @@ describe('popup.js integration tests', () => {
     expect(global.chrome.storage.local.set).toHaveBeenCalled();
   });
 
-  it('saves text to history when "Save text" is clicked and clears textarea', async () => {
+  it('saves text to history when Enter is pressed and clears textarea', async () => {
     document.getElementById('tab-context').click();
     const textarea = document.getElementById('context-text');
-    const saveBtn = document.getElementById('save-context-btn');
     
     textarea.value = 'Important note';
     fireEvent.input(textarea);
     
-    fireEvent.click(saveBtn);
+    fireEvent.keyDown(textarea, { key: 'Enter', code: 'Enter', charCode: 13 });
     
     // Using setTimeout macro because persistContext is async
     await waitFor(() => {
@@ -91,7 +91,8 @@ describe('popup.js integration tests', () => {
     api.setAttachments([{ id: '2', file: { name: 'test.txt' }, text: 'file content' }]);
     api.renderHistory();
     
-    fireEvent.click(deleteAllTextBtn);
+    fireEvent.click(deleteAllTextBtn); // First click: confirm state
+    fireEvent.click(deleteAllTextBtn); // Second click: execute delete
     
     await waitFor(() => {
       expect(api.getTextHistory().length).toBe(0);
@@ -109,7 +110,8 @@ describe('popup.js integration tests', () => {
     api.setAttachments([{ id: '2', file: { name: 'test.txt' }, text: 'file content' }]);
     api.renderHistory();
     
-    fireEvent.click(deleteAllFilesBtn);
+    fireEvent.click(deleteAllFilesBtn); // First click: confirm state
+    fireEvent.click(deleteAllFilesBtn); // Second click: execute delete
     
     await waitFor(() => {
       expect(api.getTextHistory().length).toBe(1); // text remains unaffected
@@ -153,7 +155,7 @@ describe('popup.js integration tests', () => {
     // Set a question but leave context empty
     questionEl.value = 'What is the answer?';
     
-    fireEvent.click(askBtn);
+    fireEvent.keyDown(questionEl, { key: 'Enter', code: 'Enter', charCode: 13 });
     
     await waitFor(() => {
       expect(errorEl.hidden).toBe(false);
@@ -161,10 +163,10 @@ describe('popup.js integration tests', () => {
     });
   });
 
-  it('shows an error if asking without a question', async () => {
-    const askBtn = document.getElementById('ask-btn');
+  it('does nothing if asking without a question', async () => {
     const questionEl = document.getElementById('question');
     const errorEl = document.getElementById('answer-error');
+    const answerBlock = document.getElementById('answer-block');
     
     api.setTextHistory([{ id: '1', text: 'Some context' }]);
     
@@ -174,23 +176,26 @@ describe('popup.js integration tests', () => {
     // Leave question empty
     questionEl.value = '';
     
-    fireEvent.click(askBtn);
+    // Ensure hidden state initially
+    errorEl.hidden = true;
+    answerBlock.hidden = true;
     
-    await waitFor(() => {
-      expect(errorEl.hidden).toBe(false);
-      expect(errorEl.textContent).toContain('Add a question');
-    });
+    fireEvent.keyDown(questionEl, { key: 'Enter', code: 'Enter', charCode: 13 });
+    
+    // Should remain hidden
+    expect(errorEl.hidden).toBe(true);
+    expect(answerBlock.hidden).toBe(true);
   });
 
   it('changes themes correctly', () => {
     const themeBar = document.querySelector('.theme-bar');
-    const redSwatch = document.querySelector('.theme-swatch--red');
+    const greenSwatch = document.querySelector('.theme-swatch--green');
     
-    fireEvent.click(redSwatch);
+    fireEvent.click(greenSwatch);
     
-    expect(document.body.dataset.theme).toBe('red');
-    expect(redSwatch.classList.contains('is-selected')).toBe(true);
-    expect(global.chrome.storage.local.set).toHaveBeenCalledWith({ qItThemeV1: 'red' });
+    expect(document.body.dataset.theme).toBe('green');
+    expect(greenSwatch.classList.contains('is-selected')).toBe(true);
+    expect(global.chrome.storage.local.set).toHaveBeenCalledWith({ qItThemeV1: 'green' });
   });
 
   it('submits and saves context when hitting Enter on the context box', async () => {
@@ -208,7 +213,7 @@ describe('popup.js integration tests', () => {
     // The textbox should be cleared and context saved
     await waitFor(() => {
       expect(contextText.value).toBe('');
-      expect(ingestStatus.textContent).toBe('Context saved to history.');
+      // Toast message removed in recent update
     });
   });
 
@@ -238,11 +243,12 @@ describe('popup.js integration tests', () => {
     // Press Enter
     fireEvent.keyDown(questionEl, { key: 'Enter', code: 'Enter', charCode: 13 });
     
-    // Immediately after submission, loader and question should be visible
+    // Immediately after submission, answerBlock should be visible and loading
     expect(answerBlock.hidden).toBe(false);
-    expect(askedQuestionContainer.style.display).toBe('block');
+    expect(answerText.classList.contains('is-loading')).toBe(true);
+    expect(askedQuestionContainer.style.display).toBe('flex');
     expect(askedQuestionText.textContent).toBe('What is the context?');
-    expect(answerText.innerHTML).toContain('loader-dot'); // Check for loader animation elements
+    expect(answerText.innerHTML).toContain('loader-dot'); // Check for loader
     
     await waitFor(() => {
       // AI answer should eventually appear

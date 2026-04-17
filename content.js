@@ -244,10 +244,24 @@ function fillFieldRobustly(input, value) {
   
   let activeInput = null;
   let dropdownEl = null;
+  let originalAutocomplete = null;
 
   function removeAutofillUI() {
     dropdownEl?.remove();
     dropdownEl = null;
+    
+    // Also remove any stray dropdowns that might have been left behind
+    const strayDropdowns = document.querySelectorAll('#' + AUTOFILL_DROPDOWN_ID);
+    strayDropdowns.forEach(el => el.remove());
+
+    if (activeInput && originalAutocomplete !== null) {
+      if (originalAutocomplete === undefined) {
+        activeInput.removeAttribute('autocomplete');
+      } else {
+        activeInput.setAttribute('autocomplete', originalAutocomplete);
+      }
+      originalAutocomplete = null;
+    }
   }
 
   function getFieldContext(input) {
@@ -279,41 +293,49 @@ function fillFieldRobustly(input, value) {
     const fieldContext = getFieldContext(input);
     if (!fieldContext) return;
 
-    dropdownEl.innerHTML = `<div class="qit-loading">Generating suggestion...</div>`;
-    
     try {
       const question = `What should be filled in the form field with the following context: ${fieldContext}?`;
       if (!chrome.runtime || !chrome.runtime.sendMessage) {
-        dropdownEl.innerHTML = `<div class="qit-error">Extension was reloaded. Please refresh this page.</div>`;
+        removeAutofillUI();
         return;
       }
       chrome.runtime.sendMessage({ type: "qit-autofill-request", question }, (response) => {
         if (!dropdownEl) return; // Dropdown was closed before response arrived
         
         if (chrome.runtime.lastError) {
-          dropdownEl.innerHTML = `<div class="qit-error">Error connecting to extension.</div>`;
+          removeAutofillUI();
           return;
         }
-        if (response && response.ok) {
-          if (response.answer) {
-             renderDropdown(response.answer, input);
-          } else {
-             dropdownEl.innerHTML = `<div class="qit-empty">No clear suggestion found.</div>`;
-          }
+        if (response && response.ok && response.answer) {
+          renderDropdown(response.answer, input);
         } else {
-          dropdownEl.innerHTML = `<div class="qit-error">${response?.error || 'Unknown error'}</div>`;
+          // If no suggestion, just clean up the hidden dropdown UI
+          removeAutofillUI();
         }
       });
     } catch (e) {
-      dropdownEl.innerHTML = `<div class="qit-error">Error: ${e.message}</div>`;
+      console.error("Q It: Error requesting autofill", e);
+      removeAutofillUI();
     }
   }
 
   function renderDropdown(suggestion, input) {
+    dropdownEl.style.display = "block";
     dropdownEl.innerHTML = `
+      <style>
+        #${AUTOFILL_DROPDOWN_ID} .qit-suggestion { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        #${AUTOFILL_DROPDOWN_ID} .qit-suggestion-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-grow: 1; }
+        #${AUTOFILL_DROPDOWN_ID} .qit-apply-btn { cursor: pointer; padding: 4px 8px; border-radius: 4px; border: 1px solid ${getTheme().border}; background: ${getTheme().bg}; font-size: 11px; font-weight: 500; color: ${getTheme().text}; }
+        #${AUTOFILL_DROPDOWN_ID} .qit-apply-btn:hover { filter: brightness(0.95); }
+        #${AUTOFILL_DROPDOWN_ID} .qit-close-btn { cursor: pointer; padding: 2px; border: none; background: transparent; color: ${getTheme().textMuted || '#888'}; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+        #${AUTOFILL_DROPDOWN_ID} .qit-close-btn:hover { background: rgba(128,128,128,0.1); color: ${getTheme().text}; }
+      </style>
       <div class="qit-suggestion">
         <span class="qit-suggestion-text">${suggestion}</span>
         <button type="button" class="qit-apply-btn">Apply</button>
+        <button type="button" class="qit-close-btn" aria-label="Close" title="Close suggestion">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
       </div>
     `;
 
@@ -325,11 +347,26 @@ function fillFieldRobustly(input, value) {
       
       removeAutofillUI();
     });
+
+    dropdownEl.querySelector('.qit-close-btn').addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      removeAutofillUI();
+    });
   }
 
   function placeAutofillBtn(input) {
     removeAutofillUI();
     activeInput = input;
+    
+    // Suppress browser native autofill while Q It is active
+    if (input.hasAttribute('autocomplete')) {
+      originalAutocomplete = input.getAttribute('autocomplete');
+    } else {
+      originalAutocomplete = undefined;
+    }
+    input.setAttribute('autocomplete', 'qit-disabled');
+    
     const rect = input.getBoundingClientRect();
     
     dropdownEl = document.createElement("div");
@@ -350,19 +387,8 @@ function fillFieldRobustly(input, value) {
       fontFamily: "system-ui, sans-serif",
       fontSize: "13px",
       color: getTheme().panelText,
-      display: "block" // Show immediately
+      display: "none" // Hidden initially
     });
-
-    const styleBlock = document.createElement('style');
-    styleBlock.textContent = `
-      #${AUTOFILL_DROPDOWN_ID} .qit-suggestion { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-      #${AUTOFILL_DROPDOWN_ID} .qit-suggestion-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      #${AUTOFILL_DROPDOWN_ID} .qit-apply-btn { cursor: pointer; padding: 4px 8px; border-radius: 4px; border: 1px solid ${getTheme().border}; background: ${getTheme().bg}; font-size: 11px; font-weight: 500; color: ${getTheme().text}; }
-      #${AUTOFILL_DROPDOWN_ID} .qit-apply-btn:hover { filter: brightness(0.95); }
-      #${AUTOFILL_DROPDOWN_ID} .qit-loading, #${AUTOFILL_DROPDOWN_ID} .qit-empty { color: #666; font-style: italic; }
-      #${AUTOFILL_DROPDOWN_ID} .qit-error { color: #d32f2f; }
-    `;
-    dropdownEl.appendChild(styleBlock);
 
     dropdownEl.addEventListener('mousedown', (e) => {
       // Prevent focus loss on input when interacting with dropdown
@@ -410,6 +436,28 @@ function fillFieldRobustly(input, value) {
 
       // Check heuristics to avoid popping up on non-job/profile related fields
       if (!isJobRelatedField(target)) {
+        return;
+      }
+
+      // Ignore if the field already has a value (user already typed or autofilled)
+      if (target.value && target.value.trim() !== '') {
+        return;
+      }
+
+      // Heuristic to detect if browser will likely show its native autofill dropdown.
+      // (Browsers don't expose an API to detect if native suggestions are actively showing)
+      const hasDatalist = target.hasAttribute('list');
+      
+      // Heuristic to detect if the site has its own custom dropdown (e.g. React Select, Combobox)
+      const isCombobox = target.getAttribute('role') === 'combobox';
+      const hasPopup = target.getAttribute('aria-haspopup') === 'true' || target.getAttribute('aria-haspopup') === 'listbox';
+
+      // NOTE: Checking for specific autocomplete attributes (like 'email' or 'given-name')
+      // would disable Q It on 90% of job boards since they correctly use autocomplete tags.
+      // So we only skip if there is an explicit datalist or a site custom dropdown.
+
+      if (hasDatalist || isCombobox || hasPopup) {
+        // Skip Q It inline autofill if the browser or site is likely to present a suggestion list
         return;
       }
       

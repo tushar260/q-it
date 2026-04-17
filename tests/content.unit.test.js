@@ -47,7 +47,7 @@ describe('content.js Edge Cases (Extension Reloaded)', () => {
     );
   });
 
-  test('requestAutofill shows error in dropdown when extension is reloaded', async () => {
+  test('requestAutofill cleans up dropdown when extension is reloaded', async () => {
     // Simulate extension reload
     global.chrome.runtime.sendMessage = undefined;
 
@@ -60,8 +60,7 @@ describe('content.js Edge Cases (Extension Reloaded)', () => {
 
     // Look for the dropdown created by content.js
     const dropdown = document.querySelector('#qit-autofill-dropdown');
-    expect(dropdown).not.toBeNull();
-    expect(dropdown.innerHTML).toContain("Extension was reloaded. Please refresh this page.");
+    expect(dropdown).toBeNull();
   });
 
   test('placeBar "Add to context" button alerts and removes bar when extension is reloaded', async () => {
@@ -234,4 +233,114 @@ describe('content.js isJobRelatedField heuristic', () => {
     expect(contentExports2.isJobRelatedField(document.getElementById('random-field'))).toBe(false);
   });
 });
+
+describe('content.js inline autofill dropdown edge cases', () => {
+  let contentExports2;
+
+  beforeEach(() => {
+    document.body.innerHTML = `
+      <form id="test-form">
+        <!-- Normal job field -->
+        <input type="text" id="normal-name" name="name">
+        <!-- Field with value -->
+        <input type="text" id="value-name" name="name" value="Already filled">
+        <!-- Datalist -->
+        <input type="text" id="datalist-name" name="name" list="some-list">
+        <datalist id="some-list"><option value="opt1"></datalist>
+        <!-- Combobox -->
+        <input type="text" id="combo-name" name="name" role="combobox">
+        <!-- Aria-haspopup -->
+        <input type="text" id="popup-name" name="name" aria-haspopup="true">
+        <!-- Input with existing autocomplete -->
+        <input type="text" id="autocomplete-name" name="name" autocomplete="given-name">
+      </form>
+    `;
+
+    // Mock chrome storage
+    global.chrome.storage = {
+      local: {
+        get: jest.fn((key, cb) => cb({}))
+      }
+    };
+    
+    // Mock chrome runtime
+    global.chrome.runtime = {
+      sendMessage: jest.fn(),
+      lastError: null
+    };
+
+    jest.isolateModules(() => {
+      require('../content.js');
+      contentExports2 = window.__TEST_EXPORTS_CONTENT_2__;
+    });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  test('does not open dropdown for fields with existing value', () => {
+    const input = document.getElementById('value-name');
+    input.focus();
+    const dropdown = document.querySelector('#qit-autofill-dropdown');
+    expect(dropdown).toBeNull();
+  });
+
+  test('does not open dropdown for fields with datalist', () => {
+    const input = document.getElementById('datalist-name');
+    input.focus();
+    const dropdown = document.querySelector('#qit-autofill-dropdown');
+    expect(dropdown).toBeNull();
+  });
+
+  test('does not open dropdown for combobox fields', () => {
+    const input = document.getElementById('combo-name');
+    input.focus();
+    const dropdown = document.querySelector('#qit-autofill-dropdown');
+    expect(dropdown).toBeNull();
+  });
+
+  test('does not open dropdown for fields with aria-haspopup', () => {
+    const input = document.getElementById('popup-name');
+    input.focus();
+    const dropdown = document.querySelector('#qit-autofill-dropdown');
+    expect(dropdown).toBeNull();
+  });
+
+  test('suppresses browser autofill using autocomplete=qit-disabled and restores it on close', () => {
+    const input = document.getElementById('autocomplete-name');
+    expect(input.getAttribute('autocomplete')).toBe('given-name');
+    
+    // Call placeAutofillBtn directly to avoid duplicate focusin event listeners from previous test runs
+    contentExports2.placeAutofillBtn(input);
+    
+    const dropdown = document.querySelector('#qit-autofill-dropdown');
+    expect(dropdown).not.toBeNull();
+    // Dropdown initially hidden
+    expect(dropdown.style.display).toBe('none');
+    
+    // Autocomplete should be overridden
+    expect(input.getAttribute('autocomplete')).toBe('qit-disabled');
+    
+    // Mock the runtime sendMessage response to simulate AI success
+    const calls = global.chrome.runtime.sendMessage.mock.calls;
+    const sendMsgCallback = calls[calls.length - 1][1];
+    sendMsgCallback({ ok: true, answer: "Test Suggestion" });
+    
+    // Dropdown should be shown now
+    expect(dropdown.style.display).toBe('block');
+    
+    // Close the dropdown using the X button
+    const closeBtn = dropdown.querySelector('.qit-close-btn');
+    closeBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    
+    // Dropdown should be removed
+    const afterDropdown = document.querySelectorAll('#qit-autofill-dropdown');
+    expect(afterDropdown.length).toBe(0);
+    
+    // Autocomplete should be restored
+    expect(input.getAttribute('autocomplete')).toBe('given-name');
+  });
+});
+
 

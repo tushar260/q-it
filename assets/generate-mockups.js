@@ -3,10 +3,10 @@ const fs = require('fs');
 const path = require('path');
 
 const images = [
-    { file: 'v1.1/context-yellow.png', outFile: 'v1.1/mockup-context-yellow.png', bgColor: '#e0cc3a', extraCss: 'width: calc(100% + 6px); margin: -2px -4px -2px -2px;', height: '520px', pattern: false },
-    { file: 'v1.1/question-pink.png', outFile: 'v1.1/mockup-question-pink.png', bgColor: '#e8b0d0', extraCss: 'width: calc(100% + 4px); margin: -4px -2px -2px -2px;', height: '520px', pattern: false },
-    { file: 'v1.1/settings-green.png', outFile: 'v1.1/mockup-settings-green.png', bgColor: '#9dd4a8', extraCss: 'width: calc(100% + 5px); margin: -4px -3px -4px -2px;', height: '820px', pattern: false },
-    { file: 'v1.1/settings-dark.png', outFile: 'v1.1/mockup-settings-dark.png', bgColor: '#555555', extraCss: 'width: calc(100% + 5px); margin: -4px -2px -4px -3px;', height: '820px', pattern: false }
+    { file: 'v1.1.1/context-yellow.png', outFile: 'v1.1.1/mockup-context-yellow.png', bgColor: '#e0cc3a', extraCss: 'width: 100%; margin: 0;', height: '560px', pattern: false },
+    { file: 'v1.1.1/question-pink.png', outFile: 'v1.1.1/mockup-question-pink.png', bgColor: '#e8b0d0', extraCss: 'width: 100%; margin: 0;', height: '560px', pattern: false },
+    { file: 'v1.1.1/settings-green.png', outFile: 'v1.1.1/mockup-settings-green.png', bgColor: '#9dd4a8', extraCss: 'width: 100%; margin: 0;', height: '760px', pattern: false },
+    { file: 'v1.1.1/settings-dark.png', outFile: 'v1.1.1/mockup-settings-dark.png', bgColor: '#555555', extraCss: 'width: 100%; margin: 0;', height: '760px', pattern: false }
 ];
 
 async function generate() {

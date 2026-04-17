@@ -4,10 +4,13 @@ import {
   DARK_MODE_KEY,
   STORAGE_KEY,
   PENDING_QUESTION_KEY,
+  PENDING_TAB_KEY,
+  LAST_TAB_KEY,
   AUTOFILL_ENABLED_KEY,
   AUTOCLICK_ENABLED_KEY,
-  GENERAL_KNOWLEDGE_ENABLED_KEY,
+  PERSONA_MODE_ENABLED_KEY,
   AUTOCOPY_ENABLED_KEY,
+  ACCORDION_STATE_KEY,
   LIFETIME_KEY
 } from './constants.js';
 
@@ -105,7 +108,6 @@ import {
   const askedQuestionText = document.getElementById("asked-question-text");
   const copyBtn = document.getElementById("copy-btn");
   const ingestStatus = document.getElementById("ingest-status");
-  const saveContextBtn = document.getElementById("save-context-btn");
   const clearTextBtn = document.getElementById("clear-text-btn");
   const clearAllBtn = document.getElementById("clear-all-btn");
   const attachBtn = document.getElementById("attach-btn");
@@ -156,11 +158,13 @@ import {
     if (panelContext) panelContext.hidden = !isContext;
     if (panelQuestion) panelQuestion.hidden = !isQuestion;
     if (panelSettings) panelSettings.hidden = !isSettings;
+
+    storageLocal.set({ [LAST_TAB_KEY]: which }).catch(() => {});
+    try { window.localStorage.setItem("qItLastTabSync", which); } catch(e) {}
   }
 
   const THEME_IDS = [
     "yellow",
-    "red",
     "green",
     "blue",
     "pink",
@@ -189,14 +193,11 @@ import {
         return;
       }
 
-      const rect = darkModeToggle.getBoundingClientRect();
-      const x = rect.left + rect.width / 2;
-      const y = rect.top + rect.height / 2;
+      // Originate the circular wipe from the top-right corner
+      const x = window.innerWidth;
+      const y = 0;
 
-      const endRadius = Math.hypot(
-        Math.max(x, window.innerWidth - x),
-        Math.max(y, window.innerHeight - y)
-      );
+      const endRadius = Math.hypot(window.innerWidth, window.innerHeight);
 
       const transition = document.startViewTransition(switchTheme);
 
@@ -236,28 +237,26 @@ import {
       const saveCount = textHistory.length;
 
       if (saveCount === 0) {
-        statTextDetail.textContent = "0 characters total · 0 snippets";
+        statTextDetail.textContent = "";
         statTextDetail.title = "";
       } else {
-        statTextDetail.textContent = `${textTotal.toLocaleString()} characters total · ${saveCount.toLocaleString()} snippet${saveCount === 1 ? "" : "s"}`;
-        statTextDetail.title = `Total text snippets: ${saveCount}`;
+        statTextDetail.textContent = `(${textTotal.toLocaleString()} chars)`;
+        statTextDetail.title = `${saveCount} snippet${saveCount === 1 ? "" : "s"}`;
       }
 
       const filesCount = attachments.length;
       if (filesCount === 0) {
-        statFilesDetail.textContent = "No files ingested yet";
+        statFilesDetail.textContent = "";
         statFilesDetail.title = "";
       } else {
+        statFilesDetail.textContent = `(${filesCount.toLocaleString()} total)`;
+        
         const uniqueNames = [...new Set(attachments.map(a => a.file.name))];
-        const joined = uniqueNames.join(", ");
-        const max = 160;
-        const namesPart = joined.length > max ? `${joined.slice(0, max - 1)}…` : joined;
-        statFilesDetail.textContent = `${filesCount.toLocaleString()} file${filesCount === 1 ? "" : "s"} — ${namesPart}`;
-        statFilesDetail.title = joined;
+        statFilesDetail.title = uniqueNames.join(", ");
       }
     } catch {
-      statTextDetail.textContent = "—";
-      statFilesDetail.textContent = "—";
+      statTextDetail.textContent = "";
+      statFilesDetail.textContent = "";
     }
   }
 
@@ -283,7 +282,7 @@ import {
 
   const autofillToggle = document.getElementById("autofill-toggle");
   const autoclickToggle = document.getElementById("autoclick-toggle");
-  const generalKnowledgeToggle = document.getElementById("general-knowledge-toggle");
+  const personaModeToggle = document.getElementById("persona-mode-toggle");
   const autocopyToggle = document.getElementById("autocopy-toggle");
 
   if (autocopyToggle) {
@@ -298,15 +297,15 @@ import {
     });
   }
 
-  if (generalKnowledgeToggle) {
-    storageLocal.get(GENERAL_KNOWLEDGE_ENABLED_KEY).then((res) => {
-      const isEnabled = res[GENERAL_KNOWLEDGE_ENABLED_KEY] === true; // Default false
-      generalKnowledgeToggle.checked = isEnabled;
+  if (personaModeToggle) {
+    storageLocal.get(PERSONA_MODE_ENABLED_KEY).then((res) => {
+      const isEnabled = res[PERSONA_MODE_ENABLED_KEY] !== false; // Default true
+      personaModeToggle.checked = isEnabled;
     });
 
-    generalKnowledgeToggle.addEventListener("change", (e) => {
+    personaModeToggle.addEventListener("change", (e) => {
       const isEnabled = e.target.checked;
-      storageLocal.set({ [GENERAL_KNOWLEDGE_ENABLED_KEY]: isEnabled });
+      storageLocal.set({ [PERSONA_MODE_ENABLED_KEY]: isEnabled });
     });
   }
 
@@ -344,26 +343,35 @@ import {
   let textHistory = [];
 
   let ingestStatusTimer = 0;
+
+  function showIngestProgress(message) {
+    ingestStatus.className = "ingest-status ingest-status--progress";
+    ingestStatus.innerHTML = `<span class="qit-spinner"></span><span>${message}</span>`;
+    ingestStatus.hidden = false;
+    window.clearTimeout(ingestStatusTimer);
+  }
+
   function showIngestSuccess(message) {
-    ingestStatus.classList.remove("ingest-status--error");
-    ingestStatus.textContent = message;
+    ingestStatus.className = "ingest-status ingest-status--success";
+    ingestStatus.innerHTML = `<span class="qit-check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span><span>${message}</span>`;
     ingestStatus.hidden = false;
     window.clearTimeout(ingestStatusTimer);
     ingestStatusTimer = window.setTimeout(() => {
       ingestStatus.hidden = true;
-      ingestStatus.textContent = "";
+      ingestStatus.innerHTML = "";
+      ingestStatus.className = "ingest-status";
     }, 2800);
   }
 
   function showIngestError(message) {
-    ingestStatus.classList.add("ingest-status--error");
-    ingestStatus.textContent = message;
+    ingestStatus.className = "ingest-status ingest-status--error";
+    ingestStatus.innerHTML = `<span>${message}</span>`;
     ingestStatus.hidden = false;
     window.clearTimeout(ingestStatusTimer);
     ingestStatusTimer = window.setTimeout(() => {
       ingestStatus.hidden = true;
-      ingestStatus.textContent = "";
-      ingestStatus.classList.remove("ingest-status--error");
+      ingestStatus.innerHTML = "";
+      ingestStatus.className = "ingest-status";
     }, 4000);
   }
 
@@ -388,6 +396,71 @@ import {
       r.onload = () => resolve(String(r.result ?? ""));
       r.onerror = () => reject(r.error);
       r.readAsText(file);
+    });
+  }
+
+  function setupConfirmDelete(btn, onDelete) {
+    let confirmTimeout;
+    const originalHTML = btn.innerHTML;
+    const checkIcon = `<svg width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19L21 7l-1.41-1.41z"/></svg>`;
+    const cancelIcon = `<svg width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>`;
+    const originalTitle = btn.title;
+    
+    let wrapper = null;
+    let cancelBtn = null;
+
+    function reset() {
+      clearTimeout(confirmTimeout);
+      btn.classList.remove("is-confirming");
+      btn.innerHTML = originalHTML;
+      btn.title = originalTitle;
+      if (cancelBtn) {
+        cancelBtn.remove();
+        cancelBtn = null;
+      }
+      if (wrapper) {
+        wrapper.parentNode.insertBefore(btn, wrapper);
+        wrapper.remove();
+        wrapper = null;
+      }
+    }
+
+    btn.addEventListener("click", () => {
+      if (btn.classList.contains("is-confirming")) {
+        btn.classList.add("is-deleting");
+        reset();
+        window.setTimeout(() => {
+          onDelete();
+        }, 250);
+      } else {
+        btn.classList.add("is-confirming");
+        btn.innerHTML = checkIcon;
+        btn.title = "Click again to confirm delete";
+        
+        wrapper = document.createElement("div");
+        wrapper.style.display = "flex";
+        wrapper.style.gap = "4px";
+        wrapper.style.alignItems = "center";
+        wrapper.style.margin = "-2px";
+        
+        btn.parentNode.insertBefore(wrapper, btn);
+        
+        cancelBtn = document.createElement("button");
+        cancelBtn.className = "icon-btn--small is-canceling";
+        cancelBtn.title = "Cancel delete";
+        cancelBtn.innerHTML = cancelIcon;
+        cancelBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          reset();
+        });
+        
+        wrapper.appendChild(cancelBtn);
+        wrapper.appendChild(btn);
+
+        confirmTimeout = window.setTimeout(() => {
+          reset();
+        }, 3000);
+      }
     });
   }
 
@@ -420,6 +493,11 @@ import {
       textHistory.forEach((t) => {
         const li = document.createElement("li");
         li.className = "history-item";
+        if (t.isNew) {
+          li.classList.add("history-item--new");
+          delete t.isNew;
+        }
+        
         const span = document.createElement("span");
         span.className = "history-item__text";
         span.textContent = t.text;
@@ -429,13 +507,10 @@ import {
         btn.className = "icon-btn--small";
         btn.title = "Delete text snippet";
         btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
-        btn.addEventListener("click", () => {
-          btn.classList.add("is-deleting");
-          window.setTimeout(() => {
-            textHistory = textHistory.filter((x) => x.id !== t.id);
-            renderHistory();
-            syncStorage();
-          }, 250);
+        setupConfirmDelete(btn, () => {
+          textHistory = textHistory.filter((x) => x.id !== t.id);
+          renderHistory();
+          syncStorage();
         });
 
         li.append(span, btn);
@@ -461,13 +536,10 @@ import {
         btn.className = "icon-btn--small";
         btn.title = `Delete ${a.file.name}`;
         btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
-        btn.addEventListener("click", () => {
-          btn.classList.add("is-deleting");
-          window.setTimeout(() => {
-            attachments = attachments.filter((x) => x.id !== a.id);
-            renderHistory();
-            syncStorage();
-          }, 250);
+        setupConfirmDelete(btn, () => {
+          attachments = attachments.filter((x) => x.id !== a.id);
+          renderHistory();
+          syncStorage();
         });
 
         li.append(span, btn);
@@ -490,6 +562,13 @@ import {
       const files = fileInput.files;
       if (!files?.length) return;
 
+      const n = files.length;
+
+      const originalAttachHtml = attachBtn ? attachBtn.innerHTML : '';
+      if (attachBtn) {
+        attachBtn.innerHTML = `<div class="qit-spinner" style="margin: auto;"></div>`;
+      }
+
       // Optimization: Read all uploaded text files in parallel
       const newAttachments = await Promise.all(
         Array.from(files).map(async (file) => {
@@ -507,15 +586,16 @@ import {
       );
       attachments.push(...newAttachments);
 
+      const names = Array.from(files).map((f) => f.name);
       fileInput.value = "";
       renderHistory();
       await syncStorage();
-      const n = files.length;
-      const names = Array.from(files).map((f) => f.name);
-      if (n === 1) {
-        showIngestSuccess(`Ingested · ${names[0]}`);
-      } else {
-        showIngestSuccess(`Ingested · ${n} files`);
+      
+      if (attachBtn) {
+        attachBtn.innerHTML = `<div class="qit-check" style="margin: auto; width: 16px; height: 16px;"><svg width="12" height="12" viewBox="0 0 24 24" style="margin: auto;"><path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>`;
+        setTimeout(() => {
+          if (attachBtn) attachBtn.innerHTML = originalAttachHtml;
+        }, 2000);
       }
     });
   }
@@ -529,7 +609,7 @@ import {
       if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
         e.preventDefault();
         e.stopPropagation();
-        if (saveContextBtn) saveContextBtn.click();
+        void persistContext();
       }
     });
 
@@ -593,14 +673,12 @@ import {
   async function persistContext() {
     syncLiveContextFromTextarea();
     const base = liveContextBody.trim();
-    if (!hasUsableInput() && textHistory.length === 0) {
-      showIngestError("Add text or at least one file before saving.");
+    
+    if (!base) {
       return;
     }
 
-    if (base) {
-      textHistory.push({ id: uid(), text: base });
-    }
+    textHistory.unshift({ id: uid(), text: base, isNew: true });
 
     try {
       contextText.value = "";
@@ -609,8 +687,6 @@ import {
       await syncStorage();
 
       renderHistory();
-
-      showIngestSuccess("Context saved to history.");
     } catch (e) {
       showIngestError(
         e instanceof Error ? e.message : "Could not record context.",
@@ -679,7 +755,6 @@ import {
       if (typeof q !== "string" || !q.trim()) return;
       questionEl.value = q.trim();
       await storageLocal.remove(PENDING_QUESTION_KEY);
-      showIngestSuccess("Question set from page selection.");
       setTab("question");
       questionEl.focus();
       window.setTimeout(() => {
@@ -688,12 +763,6 @@ import {
     } catch {
       /* ignore */
     }
-  }
-
-  if (saveContextBtn) {
-    saveContextBtn.addEventListener("click", () => {
-      void persistContext();
-    });
   }
 
   if (clearTextBtn) {
@@ -720,7 +789,6 @@ import {
       } catch {
         /* ignore */
       }
-      showIngestSuccess("All history and files cleared.");
     });
   }
 
@@ -730,12 +798,12 @@ import {
    */
   async function generateAnswer(context, question, onStreamChunk) {
     if (!question.trim()) {
-      return { ok: false, error: "Add a question on the Question tab." };
+      return { ok: false, error: "Question cannot be empty." };
     }
 
     try {
-      const res = await storageLocal.get(GENERAL_KNOWLEDGE_ENABLED_KEY);
-      const allowGeneralKnowledge = res[GENERAL_KNOWLEDGE_ENABLED_KEY] === true;
+      const res = await storageLocal.get(PERSONA_MODE_ENABLED_KEY);
+      const allowGeneralKnowledge = res[PERSONA_MODE_ENABLED_KEY] === false; // allow general knowledge if persona mode is OFF
 
       if (!context.trim() && !allowGeneralKnowledge) {
         return {
@@ -761,8 +829,6 @@ import {
     const question = questionEl.value.trim();
 
     if (!question) {
-      answerError.textContent = "Add a question on the Question tab.";
-      answerError.hidden = false;
       return;
     }
 
@@ -771,13 +837,29 @@ import {
 
     setTab("question");
     answerError.hidden = true;
+    
+    const answerShell = document.querySelector(".answer-shell");
+    if (answerShell) {
+      answerShell.hidden = false;
+    }
+    
+    // Show the answer block and set loading state on the answer text box
+    answerBlock.hidden = false;
+    answerText.classList.add("is-loading");
     answerText.innerHTML = '<div class="loader"><div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div></div>';
     lastAnswer = "";
-    answerBlock.hidden = false;
     
+    if (copyBtn) {
+      copyBtn.style.display = "none";
+    }
+
     if (askedQuestionContainer && askedQuestionText) {
       askedQuestionText.textContent = question;
-      askedQuestionContainer.style.display = "block";
+      askedQuestionContainer.classList.remove("bubble-animate");
+      // Trigger reflow to restart animation
+      void askedQuestionContainer.offsetWidth;
+      askedQuestionContainer.classList.add("bubble-animate");
+      askedQuestionContainer.style.display = "flex";
     }
 
     const currentToken = ++askToken;
@@ -785,6 +867,11 @@ import {
     try {
       const result = await generateAnswer(context, question, (chunk) => {
         if (currentToken !== askToken) return;
+        
+        if (answerText.classList.contains("is-loading")) {
+          answerText.classList.remove("is-loading");
+        }
+        
         lastAnswer = chunk;
         answerText.innerHTML = DOMPurify.sanitize(marked.parse(chunk));
       });
@@ -792,15 +879,24 @@ import {
       // If the user asked another question while we were waiting, discard this result
       if (currentToken !== askToken) return;
 
+      answerText.classList.remove("is-loading");
+
       if (!result.ok) {
         answerText.textContent = "";
         lastAnswer = "";
         answerError.textContent = result.error;
         answerError.hidden = false;
+        if (answerShell) {
+          answerShell.hidden = true;
+        }
         return;
       }
       lastAnswer = result.text;
       answerText.innerHTML = DOMPurify.sanitize(marked.parse(result.text));
+
+      if (copyBtn) {
+        copyBtn.style.display = "inline-flex";
+      }
 
       // Auto-copy to clipboard if enabled
       const res = await storageLocal.get(AUTOCOPY_ENABLED_KEY);
@@ -828,11 +924,6 @@ import {
     }
   }
 
-  if (askBtn) {
-    askBtn.addEventListener("click", () => {
-      void runAsk();
-    });
-  }
 
   function onAskShortcut(e) {
     if (e.key !== "Enter" || e.shiftKey) return;
@@ -869,47 +960,82 @@ import {
 
   const deleteAllTextBtn = document.getElementById("delete-all-text-btn");
   if (deleteAllTextBtn) {
-    deleteAllTextBtn.addEventListener("click", () => {
-      deleteAllTextBtn.classList.add("is-deleting");
-      window.setTimeout(() => {
-        textHistory = [];
-        renderHistory();
-        void syncStorage();
-        showIngestSuccess("All text snippets deleted.");
-        deleteAllTextBtn.classList.remove("is-deleting");
-      }, 250);
+    setupConfirmDelete(deleteAllTextBtn, () => {
+      textHistory = [];
+      renderHistory();
+      void syncStorage();
+      deleteAllTextBtn.classList.remove("is-deleting");
     });
   }
 
   const deleteAllFilesBtn = document.getElementById("delete-all-files-btn");
   if (deleteAllFilesBtn) {
-    deleteAllFilesBtn.addEventListener("click", () => {
-      deleteAllFilesBtn.classList.add("is-deleting");
-      window.setTimeout(() => {
-        attachments = [];
-        renderHistory();
-        void syncStorage();
-        showIngestSuccess("All files deleted.");
-        deleteAllFilesBtn.classList.remove("is-deleting");
-      }, 250);
+    setupConfirmDelete(deleteAllFilesBtn, () => {
+      attachments = [];
+      renderHistory();
+      void syncStorage();
+      deleteAllFilesBtn.classList.remove("is-deleting");
     });
   }
+
+  const detailsGeneral = document.getElementById("details-general");
+  const detailsAutofill = document.getElementById("details-autofill");
+  const detailsAppearance = document.getElementById("details-appearance");
+
+  function saveAccordionState() {
+    const state = {
+      general: detailsGeneral?.open ?? true,
+      autofill: detailsAutofill?.open ?? true,
+      appearance: detailsAppearance?.open ?? true
+    };
+    void storageLocal.set({ [ACCORDION_STATE_KEY]: state });
+  }
+
+  [detailsGeneral, detailsAutofill, detailsAppearance].forEach(el => {
+    if (el) {
+      el.addEventListener("toggle", saveAccordionState);
+    }
+  });
 
 
   void (async () => {
     try {
-      const data = await storageLocal.get([THEME_KEY, DARK_MODE_KEY]);
+      const data = await storageLocal.get([THEME_KEY, DARK_MODE_KEY, PENDING_TAB_KEY, LAST_TAB_KEY, ACCORDION_STATE_KEY]);
       const rawTheme = data[THEME_KEY];
       const isDark = data[DARK_MODE_KEY];
+      const pendingTab = data[PENDING_TAB_KEY];
+      const lastTab = data[LAST_TAB_KEY];
+      const accordionState = data[ACCORDION_STATE_KEY];
       
+      if (accordionState) {
+        if (detailsGeneral) detailsGeneral.open = accordionState.general;
+        if (detailsAutofill) detailsAutofill.open = accordionState.autofill;
+        if (detailsAppearance) detailsAppearance.open = accordionState.appearance;
+      }
+
       if (typeof rawTheme === "string") applyTheme(rawTheme);
       
       if (isDark === true) {
         document.body.setAttribute("data-mode", "dark");
       }
+
+      if (pendingTab) {
+        setTab(pendingTab);
+        await storageLocal.remove(PENDING_TAB_KEY);
+      } else if (lastTab) {
+        setTab(lastTab);
+      } else {
+        setTab("question");
+      }
     } catch {
       /* keep default from markup */
     }
+
+    // Force browser to apply the tab state without animations, then restore transitions
+    setTimeout(() => {
+      document.body.classList.remove("preload");
+    }, 50);
+
     await restoreContext();
     await applyPendingQuestion();
   })();

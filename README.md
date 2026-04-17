@@ -22,18 +22,49 @@
 
 **Q It** is a powerful, privacy-first Chrome extension that leverages Chrome's built-in on-device AI (Gemini Nano). It helps you instantly fill out complex forms, job applications, and answer questions based solely on your personal context—**without ever sending your data to the cloud.**
 
-## 📸 Screenshots
+## 📸 Demo & Screenshots
+
+### 1. Persona Mode
+<p align="center">
+  <video src="assets/v1.1.1/demo-01-persona-mode.mp4" autoplay loop muted playsinline width="80%"></video>
+</p>
+
+### 2. The Core Flow
+<p align="center">
+  <video src="assets/v1.1.1/demo-02-core-flow.mp4" autoplay loop muted playsinline width="80%"></video>
+</p>
+
+### 3. File Upload Context
+<p align="center">
+  <video src="assets/v1.1.1/demo-03-file-context.mp4" autoplay loop muted playsinline width="80%"></video>
+</p>
+
+### 4. Smart Autofill & Auto-Click
+<p align="center">
+  <video src="assets/v1.1.1/demo-04-autofill-toggles.mp4" autoplay loop muted playsinline width="80%"></video>
+</p>
 
 <p align="center">
-  <img src="assets/v1.1/mockup-context-yellow.png" alt="Context Tab (Yellow Theme)" width="45%">
+  <img src="assets/v1.1.1/mockup-context-yellow.png" alt="Context Tab (Yellow Theme)" width="45%">
   &nbsp; &nbsp; &nbsp;
-  <img src="assets/v1.1/mockup-question-pink.png" alt="Q&A Chat (Pink Theme)" width="45%">
+  <img src="assets/v1.1.1/mockup-question-pink.png" alt="Q&A Chat (Pink Theme)" width="45%">
 </p>
 <p align="center">
-  <img src="assets/v1.1/mockup-settings-green.png" alt="Settings Tab (Green Theme)" width="45%">
+  <img src="assets/v1.1.1/mockup-settings-green.png" alt="Settings Tab (Green Theme)" width="45%">
   &nbsp; &nbsp; &nbsp;
-  <img src="assets/v1.1/mockup-settings-dark.png" alt="Settings Tab (Dark Mode)" width="45%">
+  <img src="assets/v1.1.1/mockup-settings-dark.png" alt="Settings Tab (Dark Mode)" width="45%">
 </p>
+
+## 🆕 What's New in v1.1.1
+
+- **Persona Mode:** A new toggle in the Settings tab. By default (ON), the AI strictly impersonates you based on your context. When turned OFF, it acts as a fallback to general intelligence for questions outside your context.
+- **Redesigned Delete Flow:** No more irritating browser alert popups! Deleting context or files now features a slick, double-click inline confirmation with red (confirm) and orange (cancel) buttons.
+- **Improved Visuals & Animations:** 
+  - The Question chat interface was completely overhauled for a cleaner, more consistent look.
+  - New context snippets now animate gracefully into the list from the top.
+  - Added bouncing loading indicators and context upload spinners instead of static text.
+- **Red Theme Removed:** Cleaned up the theme options for a more curated selection.
+- **Streamlined Context Stats:** Removed the bulky context stats box. File and snippet summaries are now seamlessly integrated directly into the section headers.
 
 ## 🆕 What's New in v1.1
 

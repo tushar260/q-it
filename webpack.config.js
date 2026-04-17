@@ -6,6 +6,7 @@ const ZipPlugin = require('zip-webpack-plugin');
 module.exports = {
   entry: {
     popup: './popup.js',
+    'popup-init': './popup-init.js',
     background: './background.js',
     content: './content.js'
   },
