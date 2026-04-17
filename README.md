@@ -26,22 +26,22 @@
 
 ### 1. Persona Mode
 <p align="center">
-  <video src="assets/v1.1.1/demo-01-persona-mode.mp4" autoplay loop muted playsinline width="80%"></video>
+  <video src="https://github.com/tushar260/q-it/raw/main/assets/v1.1.1/demo-01-persona-mode.mp4" autoplay loop muted playsinline width="80%"></video>
 </p>
 
 ### 2. The Core Flow
 <p align="center">
-  <video src="assets/v1.1.1/demo-02-core-flow.mp4" autoplay loop muted playsinline width="80%"></video>
+  <video src="https://github.com/tushar260/q-it/raw/main/assets/v1.1.1/demo-02-core-flow.mp4" autoplay loop muted playsinline width="80%"></video>
 </p>
 
 ### 3. File Upload Context
 <p align="center">
-  <video src="assets/v1.1.1/demo-03-file-context.mp4" autoplay loop muted playsinline width="80%"></video>
+  <video src="https://github.com/tushar260/q-it/raw/main/assets/v1.1.1/demo-03-file-context.mp4" autoplay loop muted playsinline width="80%"></video>
 </p>
 
 ### 4. Smart Autofill & Auto-Click
 <p align="center">
-  <video src="assets/v1.1.1/demo-04-autofill-toggles.mp4" autoplay loop muted playsinline width="80%"></video>
+  <video src="https://github.com/tushar260/q-it/raw/main/assets/v1.1.1/demo-04-autofill-toggles.mp4" autoplay loop muted playsinline width="80%"></video>
 </p>
 
 <p align="center">
