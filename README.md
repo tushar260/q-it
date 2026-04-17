@@ -26,22 +26,22 @@
 
 ### 1. Persona Mode
 <p align="center">
-  <img src="assets/v1.1.1/gifs/demo-01-persona-mode.gif" width="80%" alt="Demo 1: Persona Mode">
+  <img src="assets/v1.1.1/gifs/demo-01-persona-mode.gif" width="80%" alt="Demo 1: Persona Mode" style="border: 1px solid #e1e4e8; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
 </p>
 
 ### 2. The Core Flow
 <p align="center">
-  <img src="assets/v1.1.1/gifs/demo-02-core-flow.gif" width="80%" alt="Demo 2: Core Flow">
+  <img src="assets/v1.1.1/gifs/demo-02-core-flow.gif" width="80%" alt="Demo 2: Core Flow" style="border: 1px solid #e1e4e8; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
 </p>
 
 ### 3. File Upload Context
 <p align="center">
-  <img src="assets/v1.1.1/gifs/demo-03-file-context.gif" width="80%" alt="Demo 3: File Upload Context">
+  <img src="assets/v1.1.1/gifs/demo-03-file-context.gif" width="80%" alt="Demo 3: File Upload Context" style="border: 1px solid #e1e4e8; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
 </p>
 
 ### 4. Smart Autofill & Auto-Click
 <p align="center">
-  <img src="assets/v1.1.1/gifs/demo-04-autofill-toggles.gif" width="80%" alt="Demo 4: Smart Autofill">
+  <img src="assets/v1.1.1/gifs/demo-04-autofill-toggles.gif" width="80%" alt="Demo 4: Smart Autofill" style="border: 1px solid #e1e4e8; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
 </p>
 
 ## 🖼️ Screenshots
